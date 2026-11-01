@@ -26,8 +26,6 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
             human_descriptor.parameters.generate_clouds_for_keypoints = True
 
         filter_region_descriptor = FilterObjectsByRegion.Descriptor()
-        filter_region_descriptor.parameters.semantic_map_ros_package = "robokudo_suturo"
-        filter_region_descriptor.parameters.semantic_map_name = "suturo_robocup_stick_to_the_rules"
 
         seq = py_trees.composites.Sequence("subtree_human_in_room", memory=True)
         seq.add_child(HumanAndPoseAnnotator(descriptor=human_descriptor))

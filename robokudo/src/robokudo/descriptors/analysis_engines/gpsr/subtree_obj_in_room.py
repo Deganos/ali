@@ -10,8 +10,6 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
 
     def implementation(self, name=None, *args, **kwargs):
         filter_region_descriptor = FilterObjectsByRegion.Descriptor()
-        filter_region_descriptor.parameters.semantic_map_ros_package = "robokudo_suturo"
-        filter_region_descriptor.parameters.semantic_map_name = "suturo_robocup_stick_to_the_rules"
 
         seq = py_trees.composites.Sequence("subtree_obj_in_room", memory=True)
         seq.add_children([
