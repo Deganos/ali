@@ -7,7 +7,8 @@ from robokudo.idioms import pipeline_init
 from robokudo.pipeline import Pipeline
 from robokudo.tree_components.query_based_task_scheduler import QueryBasedScheduler
 from robokudo.utils.error_handling import catch_and_raise_to_blackboard
-from robokudo_robocup_gpsr.descriptors.analysis_engines.gsam_pipeline import GSamPipeline
+# Not yet ported to CRAM (Grounded SAM), the file is still in robokudo_ws:
+# from robokudo_robocup_gpsr.descriptors.analysis_engines.gsam_pipeline import GSamPipeline
 from robokudo.descriptors.analysis_engines.gpsr.subtree_waving_raising_pipeline import \
     Subtree as Subtree_WavingRaisingPipeline
 from robokudo.descriptors.analysis_engines.gpsr.subtree_human_posture_pipeline import \
@@ -18,22 +19,25 @@ from robokudo.descriptors.analysis_engines.gpsr.subtree_pointing_pipeline import
     Subtree as Subtree_PointingPipeline
 from robokudo.descriptors.analysis_engines.gpsr.subtree_human_activity_pipeline import \
     Subtree as Subtree_Human_Activity
-from robokudo_suturo.descriptors.analysis_engines.subtree_human_attribute_pipeline import \
-    Subtree as Subtree_Human_Attribute
+# Not yet ported to CRAM (VLM via Ollama), the file is still in robokudo_ws:
+# from robokudo_suturo.descriptors.analysis_engines.subtree_human_attribute_pipeline import \
+#     Subtree as Subtree_Human_Attribute
 from robokudo.descriptors.analysis_engines.gpsr.subtree_human_near_object import \
     Subtree as Subtree_HumanNearObjectPipeline, FURNITURE
 from robokudo.descriptors.analysis_engines.gpsr.subtree_human_in_room import \
     Subtree as Subtree_HumanInRoomPipeline
 from robokudo.descriptors.analysis_engines.gpsr.subtree_obj_in_room import \
     Subtree as Subtree_ObjInRoomPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_faces import \
-    Subtree as Subtree_FacesPipeline
+# Disabled until face_recognition is installed in the CRAM environment:
+# from robokudo.descriptors.analysis_engines.gpsr.subtree_faces import \
+#     Subtree as Subtree_FacesPipeline
 from robokudo.descriptors.analysis_engines.gpsr.subtree_belief_lookup import \
     Subtree as Subtree_BeliefLookup
 from robokudo.descriptors.analysis_engines.gpsr.subtree_door_pipeline import \
     Subtree as Subtree_DoorPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_door_pipeline_gsam import \
-    Subtree as Subtree_DoorGsamPipeline
+# Not yet ported to CRAM (Grounded SAM), the file is still in robokudo_ws:
+# from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_door_pipeline_gsam import \
+#     Subtree as Subtree_DoorGsamPipeline
 
 
 class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
@@ -136,21 +140,25 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
             'HumanPosturePipeline': Subtree_HumanPosturePipeline(human_posture_attributes).implementation(),
             'ObjectDetectionPipeline': Subtree_ObjectDetectionPipeline().implementation(),
             'PointingPipeline': Subtree_PointingPipeline().implementation(),
-            'GSamPipeline': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
-                                         clothes_attributes=clothes_attributes),
-            'GSamPipelineWithRegion': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
-                                                   clothes_attributes=clothes_attributes, with_region_filter=True),
+            # Not yet ported to CRAM (Grounded SAM):
+            # 'GSamPipeline': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
+            #                              clothes_attributes=clothes_attributes),
+            # 'GSamPipelineWithRegion': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
+            #                                        clothes_attributes=clothes_attributes, with_region_filter=True),
             'HumanActivityFiltered': Subtree_Human_Activity(with_filter=True).implementation(),
             'HumanActivity' : Subtree_Human_Activity().implementation(),
-            'Attribute' : Subtree_Human_Attribute().implementation(),
+            # Not yet ported to CRAM (VLM via Ollama):
+            # 'Attribute' : Subtree_Human_Attribute().implementation(),
             'HumanNearObjectPipeline': Subtree_HumanNearObjectPipeline().implementation(),
             'HumanInRoomPipeline': Subtree_HumanInRoomPipeline().implementation(),
             'HumanActivityInRoomPipeline': Subtree_HumanInRoomPipeline(with_activity=True).implementation(),
             'ObjInRoomPipeline': Subtree_ObjInRoomPipeline().implementation(),
-            'FacePipeline': Subtree_FacesPipeline(ros_pkg_path='robokudo_robocup_gpsr').implementation(),
+            # Disabled until face_recognition is installed in the CRAM environment:
+            # 'FacePipeline': Subtree_FacesPipeline(ros_pkg_path='robokudo_robocup_gpsr').implementation(),
             'BeliefStateLookupPipeline': Subtree_BeliefLookup().implementation(),
             'DoorPipeline': Subtree_DoorPipeline().implementation(),
-            'DoorGsamPipeline': Subtree_DoorGsamPipeline().implementation(),
+            # Not yet ported to CRAM (Grounded SAM):
+            # 'DoorGsamPipeline': Subtree_DoorGsamPipeline().implementation(),
         }
 
         task_scheduling = Sequence("Task Scheduling", memory=True)
