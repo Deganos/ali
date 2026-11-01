@@ -7,6 +7,7 @@ from robokudo.annotators.cluster_position import ClusterPositionAnnotator
 from robokudo.annotators.query import GenerateQueryResult
 from robokudo.cas import CASViews
 from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.utils.file_loader import FileLoader
 from robokudo.annotators.yolo_annotator import YoloAnnotator
 
 from robokudo.annotators.gpsr.filter_humans_by_object_annotator import \
@@ -73,6 +74,8 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         yolo_descriptor = YoloAnnotator.Descriptor()
         yolo_descriptor.parameters.precision_mode = True
         yolo_descriptor.parameters.ros_package_name = 'robokudo_suturo'
+        # the SAM model lies next to our weights, outside CRAM
+        yolo_descriptor.parameters.models_directory = yolo_descriptor.parameters.file_in_ros_package('weights')
         yolo_descriptor.parameters.weights_path = 'weights/yolov8n.pt'
         yolo_descriptor.parameters.class_names_path = 'data/json/id2name_yolov8Model.json'
         yolo_descriptor.parameters.threshold = 0.6
@@ -90,6 +93,9 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         # CRAM's HumanAndPoseAnnotator works without depth by default, the person's position needs it
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
+        # the pose model lies next to our weights, outside CRAM
+        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
+            ros_pkg_name='robokudo_suturo', relative_path='weights')
 
         seq = py_trees.composites.Sequence("subtree_human_near_object", memory=True)
         seq.add_children([

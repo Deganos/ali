@@ -51,6 +51,8 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         yolo_descriptor = YoloAnnotator.Descriptor()
         yolo_descriptor.parameters.precision_mode = True
         yolo_descriptor.parameters.ros_package_name = self.ros_pkg
+        # the SAM model lies next to our weights, outside CRAM
+        yolo_descriptor.parameters.models_directory = yolo_descriptor.parameters.file_in_ros_package('weights')
         yolo_descriptor.parameters.weights_path = f"weights/{self.model}.pt"
         yolo_descriptor.parameters.class_names_path = f"data/json/id2name_{self.model}.json"
         yolo_descriptor.parameters.threshold = 0.6

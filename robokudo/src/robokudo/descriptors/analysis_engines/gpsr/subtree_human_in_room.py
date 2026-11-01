@@ -5,6 +5,7 @@ from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnot
 from robokudo.annotators.gpsr.pointing import HumanPointingAnnotator
 from robokudo.annotators.gpsr.waving import HumanWavingAnnotator
 from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.utils.file_loader import FileLoader
 from robokudo.annotators.gpsr.gpsr_results import GenerateHumanActivityResult
 from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 from robokudo.annotators.gpsr.check_for_human_hypothesis import CheckForHumanHypothesis
@@ -22,6 +23,9 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
     def implementation(self, name=None, *args, **kwargs):
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
+        # the pose model lies next to our weights, outside CRAM
+        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
+            ros_pkg_name='robokudo_suturo', relative_path='weights')
         if self.with_activity:
             human_descriptor.parameters.generate_clouds_for_keypoints = True
 
