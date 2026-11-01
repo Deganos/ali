@@ -15,9 +15,9 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         """Detect doors and handles and estimate a grasp pose for each handle."""
 
         yolo_descriptor = YoloAnnotator.Descriptor()
-        yolo_descriptor.parameters.ros_pkg_path = self.ros_pkg_path
+        yolo_descriptor.parameters.ros_package_name = self.ros_pkg_path
         yolo_descriptor.parameters.weights_path = 'weights/door.pt'
-        yolo_descriptor.parameters.id2name_json_path = 'data/json/id2name_door.json'
+        yolo_descriptor.parameters.class_names_path = 'data/json/id2name_door.json'
         yolo_descriptor.parameters.threshold = 0.35
         yolo_descriptor.parameters.precision_mode = False
 

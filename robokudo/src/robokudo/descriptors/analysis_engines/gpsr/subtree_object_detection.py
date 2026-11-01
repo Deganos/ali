@@ -10,8 +10,11 @@ from robokudo.annotators.yolo_annotator import YoloAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):
-    def __init__(self, ros_pkg="robokudo_suturo", model="ultimate_model_v11_1.26.4", skip_outlier_removal_classes=None, with_semantic_filter=False, *args, **kwargs):
+    def __init__(self, ros_pkg="robokudo_suturo", model="ultimate_model_v11_1.26.4", skip_outlier_removal_classes=None, with_semantic_filter=False,
+                 outlier_removal_name="OutlierRemovalOnObjectHypothesis", *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # CRAM's outlier removal declares ROS parameters under its name, so every instance needs its own name
+        self.outlier_removal_name = outlier_removal_name
         self.ros_pkg = ros_pkg
         self.model = model
         self.skip_outlier_removal_classes = skip_outlier_removal_classes
@@ -45,9 +48,9 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         """
         yolo_descriptor = YoloAnnotator.Descriptor()
         yolo_descriptor.parameters.precision_mode = True
-        yolo_descriptor.parameters.ros_pkg_path = self.ros_pkg
+        yolo_descriptor.parameters.ros_package_name = self.ros_pkg
         yolo_descriptor.parameters.weights_path = f"weights/{self.model}.pt"
-        yolo_descriptor.parameters.id2name_json_path = f"data/json/id2name_{self.model}.json"
+        yolo_descriptor.parameters.class_names_path = f"data/json/id2name_{self.model}.json"
         yolo_descriptor.parameters.threshold = 0.6
 
         outlier_removal_oh_descriptor = OutlierRemovalOnObjectHypothesisAnnotator.Descriptor()
@@ -60,7 +63,7 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         seq = py_trees.composites.Sequence("object_detection", memory=True)
         seq.add_children([
             YoloAnnotator(descriptor=yolo_descriptor),
-            OutlierRemovalOnObjectHypothesisAnnotator(descriptor=outlier_removal_oh_descriptor),
+            OutlierRemovalOnObjectHypothesisAnnotator(name=self.outlier_removal_name, descriptor=outlier_removal_oh_descriptor),
             ClusterPoseBBAnnotator(),
             TypeMappingAnnotator(),
             #CutleryHandleAnnotator(),

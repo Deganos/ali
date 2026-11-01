@@ -1,3 +1,5 @@
+import json
+
 import py_trees
 import robokudo.analysis_engine
 import robokudo.annotators.core
@@ -48,7 +50,11 @@ class YoloFurnitureSetup(robokudo.annotators.core.BaseAnnotator):
             location = query.obj.location
             coco_id = FURNITURE.get(location)
             if coco_id is not None:
-                self.yolo_params.classes_filter = [coco_id]
+                # CRAM's YoloAnnotator has no positive class filter, so every other class is ignored instead
+                class_names = json.loads(
+                    self.yolo_params.file_in_ros_package(self.yolo_params.class_names_path).read_text())
+                self.yolo_params.ignored_class_names = [
+                    name for class_id, name in class_names.items() if int(class_id) != coco_id]
             if location:
                 self.filter_params.target_type = location
             # optional direction from the query extracted under Attribute
@@ -66,9 +72,9 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
                        box_z=None, *args, **kwargs):
         yolo_descriptor = YoloAnnotator.Descriptor()
         yolo_descriptor.parameters.precision_mode = True
-        yolo_descriptor.parameters.ros_pkg_path = 'robokudo_suturo'
+        yolo_descriptor.parameters.ros_package_name = 'robokudo_suturo'
         yolo_descriptor.parameters.weights_path = 'weights/yolov8n.pt'
-        yolo_descriptor.parameters.id2name_json_path = 'data/json/id2name_yolov8Model.json'
+        yolo_descriptor.parameters.class_names_path = 'data/json/id2name_yolov8Model.json'
         yolo_descriptor.parameters.threshold = 0.6
 
         filter_descriptor = FilterHumansByObjectAnnotator.Descriptor()

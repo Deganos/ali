@@ -15,7 +15,8 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
 
         seq = py_trees.composites.Sequence("subtree_obj_in_room", memory=True)
         seq.add_children([
-            ObjectDetectionSubtree(model="ultimate_model_v11_1.26.4").implementation(),
+            ObjectDetectionSubtree(model="ultimate_model_v11_1.26.4",
+                                   outlier_removal_name="OutlierRemovalOnObjectHypothesisInRoom").implementation(),
             FilterObjectsByRegion(descriptor=filter_region_descriptor),
             BeliefStateAnnotator(),
             GenerateAllQueryResult(),
