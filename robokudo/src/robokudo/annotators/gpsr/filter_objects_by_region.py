@@ -9,13 +9,14 @@ from robokudo.types.annotation import PoseAnnotation
 from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world
 from semantic_digital_twin.adapters.ros.node_registry import ROSNodeRegistry
 from semantic_digital_twin.adapters.ros.world_fetcher import fetch_world_from_service
+from semantic_digital_twin.adapters.ros.world_synchronizer import WorldSynchronizer
 from semantic_digital_twin.semantic_annotations.semantic_annotations import Room
 
 
 class FilterObjectsByRegion(robokudo.annotators.core.BaseAnnotator):
     """
     Marks every hypothesis that stands in the queried room with a LocationAnnotation.
-    The rooms come from knowledge's world; the result annotators keep only the marked hypotheses.
+    The rooms come from the shared world; the result annotators keep only the marked hypotheses.
     """
 
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
@@ -30,7 +31,7 @@ class FilterObjectsByRegion(robokudo.annotators.core.BaseAnnotator):
         super().__init__(name=name, descriptor=descriptor)
         self.world_frame_name = self.descriptor.parameters.world_frame_name
         self.active_region = self.descriptor.parameters.active_region
-        self.knowledge_world = None
+        self.world = None
 
     def update(self):
         if not self.get_cas().contains(CASViews.QUERY):
@@ -39,18 +40,21 @@ class FilterObjectsByRegion(robokudo.annotators.core.BaseAnnotator):
         if queried_location == "":
             return py_trees.common.Status.SUCCESS
 
-        # Knowledge's world is fetched once, on the first query that asks for a room.
+        # The shared world is fetched once, on the first query that asks for a room.
         # Its root frame is assumed to be the robot's map frame.
-        if self.knowledge_world is None:
-            self.knowledge_world = fetch_world_from_service(ROSNodeRegistry().get())
-        rooms = [room for room in self.knowledge_world.get_semantic_annotations_by_type(Room)
+        if self.world is None:
+            node = ROSNodeRegistry().get()
+            self.world = fetch_world_from_service(node)
+            # keeps the fetched copy up to date, e.g. with rooms added after the fetch
+            WorldSynchronizer(_world=self.world, node=node)
+        rooms = [room for room in self.world.get_semantic_annotations_by_type(Room)
                  if room.name.name == queried_location]
         if not rooms:
             # No exception here: an unknown room yields an empty answer instead of a query that never returns.
-            self.rk_logger.warning(f"Knowledge's world has no room '{queried_location}', no hypothesis is kept")
+            self.rk_logger.warning(f"The shared world has no room '{queried_location}', no hypothesis is kept")
             self._draw_region_overlay(queried_location)
             return py_trees.common.Status.SUCCESS
-        floor_boxes = list(rooms[0].floor.root.collision.as_bounding_box_collection_in_frame(self.knowledge_world.root))
+        floor_boxes = list(rooms[0].floor.root.collision.as_bounding_box_collection_in_frame(self.world.root))
 
         region_annotation = robokudo.types.annotation.LocationAnnotation()
         region_annotation.name = queried_location
