@@ -140,7 +140,7 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
 
         task_trees = {
             'WavingRaisingPipeline': Subtree_WavingRaisingPipeline().implementation(),
-            'HumanPosturePipeline': Subtree_HumanPosturePipeline(human_posture_attributes).implementation(),
+            'HumanPosturePipeline': Subtree_HumanPosturePipeline().implementation(),
             'ObjectDetectionPipeline': Subtree_ObjectDetectionPipeline().implementation(),
             'PointingPipeline': Subtree_PointingPipeline().implementation(),
             # Not yet ported to CRAM (Grounded SAM):

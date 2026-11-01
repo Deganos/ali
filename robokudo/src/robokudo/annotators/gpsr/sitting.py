@@ -14,15 +14,8 @@ import robokudo.utils.error_handling
 import robokudo.utils.math_helper
 import robokudo.utils.o3d_helper
 import robokudo.utils.transform
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.human_and_pose import PoseKeypoint
 
-# Structure to hold keypoint data and confidence to ease handling of multiple keypoints
-class KeypointData:
-    def __init__(self, data: list):
-        assert (len(data) == 3)
-        self.x = data[0]
-        self.y = data[1]
-        self.confidence = data[2]
 
 class HumanSittingAnnotator(robokudo.annotators.core.BaseAnnotator):
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
@@ -50,7 +43,6 @@ class HumanSittingAnnotator(robokudo.annotators.core.BaseAnnotator):
         # Retrieve current sensor data from CAS.
         self.color = self.get_cas().get(robokudo.cas.CASViews.COLOR_IMAGE)
         self.cloud = self.get_cas().get(robokudo.cas.CASViews.CLOUD)
-        self.cam_info = self.get_cas().get(robokudo.cas.CASViews.CAM_INFO)
 
         # Retrieve all detected human hypotheses.
         human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
@@ -61,7 +53,7 @@ class HumanSittingAnnotator(robokudo.annotators.core.BaseAnnotator):
             keypoint_annotations = robokudo.cas.CAS.filter_by_type(robokudo.types.human.KeypointAnnotation,
                                                                    human_hypothesis.annotations)
             keypoint_2d_annotations = [a for a in keypoint_annotations if
-                                       a.type == robokudo.types.human.KeypointAnnotation.KP_TYPE_2D]
+                                       a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION]
 
             # If no keypoints are available, skip this human.
             if len(keypoint_2d_annotations) == 0:
@@ -83,18 +75,18 @@ class HumanSittingAnnotator(robokudo.annotators.core.BaseAnnotator):
         self.feedback_message = f"Processing took {(end_timer - start_timer):.4f}s"
         return py_trees.common.Status.SUCCESS
 
-    def keypoints_sitting(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation.KP_TYPE_2D):
+    def keypoints_sitting(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
         p = self.descriptor.parameters
         th = p.keypoint_confidence_threshold
 
         # Load keypoints for left and right body sides.
-        left_hip = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_HIP])
-        left_knee = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_KNEE])
-        left_ankle = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_ANKLE])
+        left_hip = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_HIP]
+        left_knee = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_KNEE]
+        left_ankle = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_ANKLE]
 
-        right_hip = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_HIP])
-        right_knee = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_KNEE])
-        right_ankle = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_ANKLE])
+        right_hip = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_HIP]
+        right_knee = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_KNEE]
+        right_ankle = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_ANKLE]
 
         # Check whether keypoints on each side are reliable.
         left_ok = min(left_hip.confidence, left_knee.confidence, left_ankle.confidence) >= th

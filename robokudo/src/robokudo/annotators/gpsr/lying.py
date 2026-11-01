@@ -14,15 +14,8 @@ import robokudo.utils.error_handling
 import robokudo.utils.math_helper
 import robokudo.utils.o3d_helper
 import robokudo.utils.transform
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.human_and_pose import PoseKeypoint
 
-# Structure to hold keypoint data and confidence to ease handling of multiple keypoints
-class KeypointData:
-    def __init__(self, data: list):
-        assert (len(data) == 3)
-        self.x = data[0]
-        self.y = data[1]
-        self.confidence = data[2]
 
 class HumanLyingAnnotator(robokudo.annotators.core.BaseAnnotator):
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
@@ -51,7 +44,6 @@ class HumanLyingAnnotator(robokudo.annotators.core.BaseAnnotator):
         # Retrieve sensor data from CAS (color image, point cloud, camera info).
         self.color = self.get_cas().get(robokudo.cas.CASViews.COLOR_IMAGE)
         self.cloud = self.get_cas().get(robokudo.cas.CASViews.CLOUD)
-        self.cam_info = self.get_cas().get(robokudo.cas.CASViews.CAM_INFO)
 
         human_hypotheses = self.get_cas().filter_annotations_by_type(
             robokudo.types.scene.HumanHypothesis
@@ -69,7 +61,7 @@ class HumanLyingAnnotator(robokudo.annotators.core.BaseAnnotator):
 
             keypoint_2d_annotations = [
                 a for a in keypoint_annotations
-                if a.type == robokudo.types.human.KeypointAnnotation.KP_TYPE_2D
+                if a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION
             ]
 
             if len(keypoint_2d_annotations) == 0:
@@ -96,19 +88,18 @@ class HumanLyingAnnotator(robokudo.annotators.core.BaseAnnotator):
         th = p.keypoint_confidence_threshold
 
         # Load lower-body keypoints.
-        left_hip = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_HIP])
-        left_knee = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_KNEE])
-        left_ankle = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_ANKLE])
+        left_hip = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_HIP]
+        left_knee = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_KNEE]
+        left_ankle = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_ANKLE]
 
-        right_hip = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_HIP])
-        right_knee = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_KNEE])
-        right_ankle = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_ANKLE])
+        right_hip = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_HIP]
+        right_knee = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_KNEE]
+        right_ankle = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_ANKLE]
 
         # Load upper-body keypoints.
-        left_shoulder = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_SHOULDER])
-        right_shoulder = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_SHOULDER])
-        nose = KeypointData(keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.NOSE])
+        left_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_SHOULDER]
+        right_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_SHOULDER]
+        nose = keypoint_2d_annotation.keypoints[PoseKeypoint.NOSE]
 
         # Check whether lower and upper body keypoints are sufficiently reliable.
         lower_ok = (

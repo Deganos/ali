@@ -11,6 +11,9 @@ from robokudo.utils.type_conversion import get_geometry_msgs_pose_stamped_from_p
 from robokudo_msgs.action import Query
 from robokudo_msgs.msg import ObjectDesignator
 from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
+from robokudo.annotators.gpsr.lying import HumanLyingAnnotator
+from robokudo.annotators.gpsr.sitting import HumanSittingAnnotator
+from robokudo.annotators.gpsr.standing import HumanStandingAnnotator
 from robokudo.annotators.gpsr.belief_state import BeliefEntry
 
 
@@ -44,16 +47,30 @@ class GenerateHumanPostureResults(BaseAnnotator):
         query_result = []
         result = Query.Result()
 
+        keypoint_rule_sources = {HumanSittingAnnotator.__name__, HumanStandingAnnotator.__name__, HumanLyingAnnotator.__name__}
+        clip_posture_labels = HumanActivityAnnotator.Descriptor.Parameters().posture_labels
+
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
             object_designator.type = query.obj.type
-            classifications = self.get_cas().filter_by_type(Classification, hypothesis.annotations)
+            activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
             positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
 
-            for classification in classifications:
-                if classification.source == "CLIPAnnotator":
-                    if classification.classname == query.obj.attribute[0]:
-                        object_designator.attribute.append(classification.classname)
+            # the keypoint rules decide when exactly one of them fires, otherwise the CLIP posture does
+            keypoint_postures = {a.type for a in activities if a.source in keypoint_rule_sources}
+            clip_postures = [a.type.lower() for a in activities
+                             if a.source == HumanActivityAnnotator.__name__ and a.type in clip_posture_labels]
+            if len(keypoint_postures) == 1:
+                posture, decided_by = keypoint_postures.pop(), "keypoints"
+            elif clip_postures:
+                posture, decided_by = clip_postures[0], "CLIP"
+            else:
+                continue
+            # the rules and CLIP say lying, the queries say laying
+            posture = "laying" if posture == "lying" else posture
+            self.rk_logger.info(f"Posture of HH {hypothesis.id}: {posture} (decided by {decided_by})")
+            if posture == query.obj.attribute[0]:
+                object_designator.attribute.append(posture)
 
             if object_designator.attribute:
                 belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
