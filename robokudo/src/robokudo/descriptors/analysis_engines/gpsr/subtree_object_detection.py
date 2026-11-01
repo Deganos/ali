@@ -1,7 +1,9 @@
 import py_trees.composites
+import py_trees.decorators
 
 import robokudo.analysis_engine
 import robokudo.pipeline
+from robokudo.annotators.cas_check import CASCheckOHExists
 from robokudo.annotators.cluster_pose_bb import ClusterPoseBBAnnotator
 from robokudo.annotators.outlier_removal_objecthypothesis import OutlierRemovalOnObjectHypothesisAnnotator
 from robokudo.annotators.gpsr.filter_object_by_semantic_annotation import FilterObjectBySemanticAnnotation
@@ -60,13 +62,25 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         outlier_removal_oh_descriptor.parameters.stat_std = 0.45
         outlier_removal_oh_descriptor.parameters.skip_removal_on_classes = self.skip_outlier_removal_classes
 
-        seq = py_trees.composites.Sequence("object_detection", memory=True)
-        seq.add_children([
-            YoloAnnotator(descriptor=yolo_descriptor),
+        object_processing = py_trees.composites.Sequence("object_processing", memory=True)
+        object_processing.add_children([
+            CASCheckOHExists(name="ObjectHypothesesFound"),
             OutlierRemovalOnObjectHypothesisAnnotator(name=self.outlier_removal_name, descriptor=outlier_removal_oh_descriptor),
             ClusterPoseBBAnnotator(),
             TypeMappingAnnotator(),
             #CutleryHandleAnnotator(),
+        ])
+        # CRAM's outlier removal raises without object hypotheses; an empty scene is answered with an empty result
+        # instead, while any other failure of the processing still fails the query
+        empty_scene = py_trees.decorators.Inverter(
+            name="NoObjectHypotheses", child=CASCheckOHExists(name="AnyObjectHypothesis"))
+        processing_unless_empty = py_trees.composites.Selector("object_processing_unless_empty", memory=True)
+        processing_unless_empty.add_children([object_processing, empty_scene])
+
+        seq = py_trees.composites.Sequence("object_detection", memory=True)
+        seq.add_children([
+            YoloAnnotator(descriptor=yolo_descriptor),
+            processing_unless_empty,
         ])
         # optionally filter results to only objects matching the semantic query
         if self.with_semantic_filter:
