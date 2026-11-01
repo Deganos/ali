@@ -9,13 +9,14 @@ from robokudo.utils.file_loader import FileLoader
 from robokudo.annotators.gpsr.gpsr_results import GenerateHumanActivityResult
 from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 from robokudo.annotators.gpsr.check_for_human_hypothesis import CheckForHumanHypothesis
-from robokudo.annotators.gpsr.filter_human_by_activity_annotator import FilterHumanByActivityAnnotator
+from robokudo.annotators.gpsr.filter_human_by_activity_annotator import (
+    FilterHumanByActivityAnnotator,
+)
 from robokudo.annotators.gpsr.filter_objects_by_region import FilterObjectsByRegion
 from robokudo.annotators.gpsr.generate_all_annotations import GenerateAllQueryResult
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):
-
     def __init__(self, with_activity=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.with_activity = with_activity
@@ -24,8 +25,11 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
         # the pose model lies next to our weights, outside CRAM
-        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
-            ros_pkg_name='robokudo_suturo', relative_path='weights')
+        human_descriptor.parameters.models_directory = (
+            FileLoader.get_path_to_file_in_ros_package(
+                ros_pkg_name="robokudo_suturo", relative_path="weights"
+            )
+        )
         if self.with_activity:
             human_descriptor.parameters.generate_clouds_for_keypoints = True
 
@@ -44,22 +48,26 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
             pointing_descriptor.parameters.known = True
             pointing_descriptor.parameters.min_arm_extension = 0.25
 
-            seq.add_children([
-                HumanActivityAnnotator(),
-                ClusterPositionAnnotator(),
-                HumanWavingAnnotator(descriptor=waving_descriptor),
-                HumanPointingAnnotator(descriptor=pointing_descriptor),
-                FilterObjectsByRegion(descriptor=filter_region_descriptor),
-                BeliefStateAnnotator(),
-                FilterHumanByActivityAnnotator(),
-                GenerateHumanActivityResult(),
-            ])
+            seq.add_children(
+                [
+                    HumanActivityAnnotator(),
+                    ClusterPositionAnnotator(),
+                    HumanWavingAnnotator(descriptor=waving_descriptor),
+                    HumanPointingAnnotator(descriptor=pointing_descriptor),
+                    FilterObjectsByRegion(descriptor=filter_region_descriptor),
+                    BeliefStateAnnotator(),
+                    FilterHumanByActivityAnnotator(),
+                    GenerateHumanActivityResult(),
+                ]
+            )
         else:
-            seq.add_children([
-                ClusterPositionAnnotator(),
-                FilterObjectsByRegion(descriptor=filter_region_descriptor),
-                BeliefStateAnnotator(),
-                GenerateAllQueryResult(),
-            ])
+            seq.add_children(
+                [
+                    ClusterPositionAnnotator(),
+                    FilterObjectsByRegion(descriptor=filter_region_descriptor),
+                    BeliefStateAnnotator(),
+                    GenerateAllQueryResult(),
+                ]
+            )
 
         return seq

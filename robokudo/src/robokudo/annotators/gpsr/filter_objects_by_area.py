@@ -8,47 +8,61 @@ import robokudo.defs
 
 
 class FilterObjectsByArea(robokudo.annotators.core.BaseAnnotator):
-    """This Annotator removes all Annotations that are not in a submitted area"""
+    """
+    This Annotator removes all Annotations that are not in a submitted area.
+    """
 
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
-        """Descriptor for FilterObjectsByArea."""
+        """
+        Descriptor for FilterObjectsByArea.
+        """
 
         class Parameters:
-            """Parameters for the Descriptor."""
+            """
+            Parameters for the Descriptor.
+            """
+
             def __init__(self):
                 # Submitted area coordinates
-                self.min_x = -1 #-float('inf')
+                self.min_x = -1  # -float('inf')
                 self.min_y = -3
-                self.min_z = -float('inf')
+                self.min_z = -float("inf")
                 self.max_x = 11
                 self.max_y = 10
-                self.max_z = float('inf')
+                self.max_z = float("inf")
 
                 # In which frame are the coordinates?
                 # If \map the coordinates will be transformed first
-                self.frame = 'map'
+                self.frame = "map"
+
         parameters = Parameters()
 
     def __init__(self, name="FilterObjectsByArea", descriptor=Descriptor()):
         super().__init__(name, descriptor)
         self.rk_logger.debug("%s.__init__()" % self.__class__.__name__)
 
-
     def update(self):
         cas = self.get_cas()
-        object_hypothesis = cas.filter_annotations_by_type(robokudo.types.scene.ObjectHypothesis)
+        object_hypothesis = cas.filter_annotations_by_type(
+            robokudo.types.scene.ObjectHypothesis
+        )
 
         for hypothesis in object_hypothesis:
             for annotation in hypothesis.annotations:
-                if (not isinstance(annotation, robokudo.types.annotation.PoseAnnotation)
-                        and not isinstance(annotation, robokudo.types.annotation.PositionAnnotation)):
+                if not isinstance(
+                    annotation, robokudo.types.annotation.PoseAnnotation
+                ) and not isinstance(
+                    annotation, robokudo.types.annotation.PositionAnnotation
+                ):
                     continue
                 # Transform to get unique type
                 pose_map = self.__transform(annotation)
 
                 # If submitted ares coordinates are in map coordinates, transform PoseAnnotation to map
-                if self.descriptor.parameters.frame is 'map':
-                    pose_map = transform_pose_from_camera_to_world(self.get_cas(), pose_map)
+                if self.descriptor.parameters.frame is "map":
+                    pose_map = transform_pose_from_camera_to_world(
+                        self.get_cas(), pose_map
+                    )
 
                 self.__transform(pose_map)
 
@@ -57,29 +71,41 @@ class FilterObjectsByArea(robokudo.annotators.core.BaseAnnotator):
                     cas.annotations.remove(hypothesis)
         return py_trees.common.Status.SUCCESS
 
-
-    def __in_area(self,pose : robokudo.types.annotation.PoseAnnotation) -> bool:
-        '''Checks if a submitted PoseAnnotation is in a predefined area.'''
+    def __in_area(self, pose: robokudo.types.annotation.PoseAnnotation) -> bool:
+        """
+        Checks if a submitted PoseAnnotation is in a predefined area.
+        """
         parameter = self.descriptor.parameters
 
         # Check x coordinate
-        if parameter.min_x > pose.translation[0] or pose.translation[0] > parameter.max_x:
+        if (
+            parameter.min_x > pose.translation[0]
+            or pose.translation[0] > parameter.max_x
+        ):
             return False
         # Check Y coordinate
-        if parameter.min_y > pose.translation[1] or pose.translation[1] > parameter.max_y:
+        if (
+            parameter.min_y > pose.translation[1]
+            or pose.translation[1] > parameter.max_y
+        ):
             return False
         # Check Z coordinate
-        if parameter.min_z > pose.translation[2] or pose.translation[2] > parameter.max_z:
+        if (
+            parameter.min_z > pose.translation[2]
+            or pose.translation[2] > parameter.max_z
+        ):
             return False
         return True
 
-    def __transform(self,pose) -> robokudo.types.annotation.PoseAnnotation:
-        '''Returns a PoseAnnotation'''
+    def __transform(self, pose) -> robokudo.types.annotation.PoseAnnotation:
+        """
+        Returns a PoseAnnotation.
+        """
         if isinstance(pose, robokudo.types.annotation.PoseAnnotation):
             return pose
         # Raise Error, if type is missing
         if not isinstance(pose, robokudo.types.annotation.PositionAnnotation):
-            raise('Wrong type in transform for area.')
+            raise ("Wrong type in transform for area.")
 
         pos = robokudo.types.annotation.PoseAnnotation()
         pos.translation.insert(0, pose.translation[0])
@@ -91,4 +117,3 @@ class FilterObjectsByArea(robokudo.annotators.core.BaseAnnotator):
         pos.rotation.insert(2, 0)
         pos.rotation.insert(3, 1)
         return pos
-

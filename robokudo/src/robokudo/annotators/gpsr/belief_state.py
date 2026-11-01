@@ -25,7 +25,6 @@ class EntityType(str, Enum):
 
 
 class BeliefEntry:
-
     def __init__(self, entry_id, entity_type, classname):
         self.id = entry_id
         self.entity_type = entity_type
@@ -48,18 +47,18 @@ class BeliefEntry:
         base["position"] = {
             "x": self.position[0],
             "y": self.position[1],
-            "z": self.position[2]
+            "z": self.position[2],
         }
         base["orientation"] = {
             "x": self.orientation[0],
             "y": self.orientation[1],
             "z": self.orientation[2],
-            "w": self.orientation[3]
+            "w": self.orientation[3],
         }
         base["dimensions"] = {
             "x": self.dimensions[0],
             "y": self.dimensions[1],
-            "z": self.dimensions[2]
+            "z": self.dimensions[2],
         }
         base["last_seen"] = time.strftime("%H:%M:%S", time.localtime(self.last_seen))
         base["confidence"] = self.confidence
@@ -77,7 +76,6 @@ class BeliefEntry:
 
 
 class BeliefState:
-
     def __init__(self):
         self.entries = {}
 
@@ -178,7 +176,6 @@ def _distance(a, b):
 
 
 class BeliefStateAnnotator(robokudo.annotators.core.BaseAnnotator):
-
     _state = BeliefState()
     _next_id = 1
 
@@ -302,7 +299,10 @@ class BeliefStateAnnotator(robokudo.annotators.core.BaseAnnotator):
                 except Exception:
                     position = list(ann.translation)
                     orientation = list(ann.rotation)
-            elif isinstance(ann, robokudo.types.annotation.PositionAnnotation) and position is None:
+            elif (
+                isinstance(ann, robokudo.types.annotation.PositionAnnotation)
+                and position is None
+            ):
                 pose_like = robokudo.types.annotation.PoseAnnotation()
                 pose_like.translation = list(ann.translation)
                 pose_like.rotation = [0.0, 0.0, 0.0, 1.0]
@@ -356,9 +356,15 @@ class BeliefStateAnnotator(robokudo.annotators.core.BaseAnnotator):
         to_delete = []
         for entry_id, entry in self._state.entries.items():
             age = now - entry.last_seen
-            if entry.entity_type == EntityType.PERSON and age > self.person_delete_after:
+            if (
+                entry.entity_type == EntityType.PERSON
+                and age > self.person_delete_after
+            ):
                 to_delete.append(entry_id)
-            elif entry.entity_type == EntityType.OBJECT and age > self.object_delete_after:
+            elif (
+                entry.entity_type == EntityType.OBJECT
+                and age > self.object_delete_after
+            ):
                 to_delete.append(entry_id)
             elif age > self.probably_there_after:
                 entry.status = EntityStatus.PROBABLY_THERE

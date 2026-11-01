@@ -13,17 +13,18 @@ from robokudo.cas import CAS, CASViews
 from robokudo.io.camera_model_adapters import Open3DCameraModelAdapter
 from robokudo.types.scene import ObjectHypothesis
 
-DOOR_CLASSES = ('door', 'cabinet door', 'refrigerator door')
-HANDLE_CLASS = 'handle'
-GRASP_CLASS = 'grasp_point'
+DOOR_CLASSES = ("door", "cabinet door", "refrigerator door")
+HANDLE_CLASS = "handle"
+GRASP_CLASS = "grasp_point"
 
 
 class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
-    """Estimate a grasp pose for door handles.
+    """
+    Estimate a grasp pose for door handles.
 
-    The door is a plane, the handle is what sticks out of it. A RANSAC plane fit on
-    the door region gives the approach direction, the points in front of that plane
-    give the handle geometry, and a PCA on those points gives its axis.
+    The door is a plane, the handle is what sticks out of it. A RANSAC plane fit on the
+    door region gives the approach direction, the points in front of that plane give the
+    handle geometry, and a PCA on those points gives its axis.
     """
 
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
@@ -60,8 +61,9 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
     def get_hypotheses_by_classname(self, classnames):
         result = []
         for hypothesis in self.get_cas().filter_annotations_by_type(ObjectHypothesis):
-            classifications = CAS.filter_by_type(robokudo.types.annotation.Classification,
-                                                 hypothesis.annotations)
+            classifications = CAS.filter_by_type(
+                robokudo.types.annotation.Classification, hypothesis.annotations
+            )
             for classification in classifications:
                 if classification.classname in classnames:
                     result.append((hypothesis, classification))
@@ -77,12 +79,14 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return x, y, w, h
 
     def points_in_box(self, box):
-        """Backproject the valid depth pixels of one image region into camera coordinates."""
+        """
+        Backproject the valid depth pixels of one image region into camera coordinates.
+        """
         x, y, w, h = box
         if w <= 0 or h <= 0:
             return np.empty((0, 3)), np.empty((0, 2), dtype=int)
 
-        depth = self.depth[y:y + h, x:x + w]
+        depth = self.depth[y : y + h, x : x + w]
         lo, hi = self.descriptor.parameters.valid_depth_range
         valid = np.isfinite(depth) & (depth > lo) & (depth < hi)
         if not valid.any():
@@ -92,9 +96,9 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         us = us + x
         vs = vs + y
         z = depth[valid]
-        points = np.stack([(us - self.cx) * z / self.fx,
-                           (vs - self.cy) * z / self.fy,
-                           z], axis=1)
+        points = np.stack(
+            [(us - self.cx) * z / self.fx, (vs - self.cy) * z / self.fy, z], axis=1
+        )
         return points, np.stack([us, vs], axis=1)
 
     def fit_plane(self, points):
@@ -104,7 +108,8 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         model, inliers = cloud.segment_plane(
             distance_threshold=self.descriptor.parameters.plane_distance_threshold,
             ransac_n=3,
-            num_iterations=self.descriptor.parameters.ransac_iterations)
+            num_iterations=self.descriptor.parameters.ransac_iterations,
+        )
         a, b, c, d = model
         normal = np.array([a, b, c], dtype=float)
         length = np.linalg.norm(normal)
@@ -116,10 +121,12 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return normal, d, len(inliers)
 
     def free_end_sign(self, along, protrusion, axis, centroid, door_center):
-        """Which way along the axis the handle ends free.
+        """
+        Which way along the axis the handle ends free.
 
-        Towards the rosette the handle curves back into the door, so its protrusion drops.
-        When both ends look alike, fall back on the door: a lever points to the door centre.
+        Towards the rosette the handle curves back into the door, so its protrusion
+        drops. When both ends look alike, fall back on the door: a lever points to the
+        door centre.
         """
         edge = max(int(0.1 * len(along)), 5)
         order = np.argsort(along)
@@ -129,10 +136,14 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
             return (1.0 if high > low else -1.0), "protrusion"
         if door_center is None:
             return 1.0, "no hint"
-        return (1.0 if np.dot(door_center - centroid, axis) > 0 else -1.0), "door centre"
+        return (
+            1.0 if np.dot(door_center - centroid, axis) > 0 else -1.0
+        ), "door centre"
 
     def grasp_pose_from_points(self, points, protrusion, normal, door_center):
-        """Build a right handed frame: x approaches the door, y follows the handle axis."""
+        """
+        Build a right handed frame: x approaches the door, y follows the handle axis.
+        """
         centroid = points.mean(axis=0)
         centered = points - centroid
         eigenvalues, eigenvectors = np.linalg.eigh(np.cov(centered.T))
@@ -146,16 +157,22 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         axis = axis / norm
 
         along = centered @ axis
-        sign, reason = self.free_end_sign(along, protrusion, axis, centroid, door_center)
+        sign, reason = self.free_end_sign(
+            along, protrusion, axis, centroid, door_center
+        )
         axis = sign * axis  # from here on the axis points at the free end
 
         third = np.cross(approach, axis)
         rotation = np.column_stack([approach, axis, third])
 
         # Sit one pad half plus some air inside the tip, never past the centroid.
-        margin = 0.5 * self.descriptor.parameters.jaw_pad_width + \
-            self.descriptor.parameters.tip_clearance
-        tip = float(np.percentile(sign * along, 98))  # robust against single stray points
+        margin = (
+            0.5 * self.descriptor.parameters.jaw_pad_width
+            + self.descriptor.parameters.tip_clearance
+        )
+        tip = float(
+            np.percentile(sign * along, 98)
+        )  # robust against single stray points
         offset = max(tip - margin, 0.0)
         translation = centroid + offset * axis
         length = float(along.max() - along.min())
@@ -165,7 +182,9 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return centroid, translation, rotation, axis, spread, length, offset, reason
 
     def frame_from_normal(self, normal):
-        """Frame of a flat surface: x approaches it, y points up in the image."""
+        """
+        Frame of a flat surface: x approaches it, y points up in the image.
+        """
         approach = -normal
         up = np.array([0.0, -1.0, 0.0])
         axis = up - np.dot(up, approach) * approach
@@ -176,9 +195,13 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return np.column_stack([approach, axis, np.cross(approach, axis)])
 
     def pose_on_plane(self, points, normal, plane_d):
-        """Centre of the plane region, snapped exactly onto the plane."""
+        """
+        Centre of the plane region, snapped exactly onto the plane.
+        """
         signed = points @ normal + plane_d
-        inliers = points[np.abs(signed) < self.descriptor.parameters.plane_distance_threshold]
+        inliers = points[
+            np.abs(signed) < self.descriptor.parameters.plane_distance_threshold
+        ]
         if len(inliers) == 0:
             return None
         rotation = self.frame_from_normal(normal)
@@ -188,7 +211,9 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return centroid - (np.dot(centroid, normal) + plane_d) * normal, rotation
 
     def grasp_hypothesis(self, translation, rotation):
-        """Own hypothesis, so the grasp point becomes a separate entry in the query result."""
+        """
+        Own hypothesis, so the grasp point becomes a separate entry in the query result.
+        """
         hypothesis = ObjectHypothesis()
         hypothesis.type = GRASP_CLASS
         classification = robokudo.types.annotation.Classification()
@@ -199,11 +224,16 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         return hypothesis
 
     def add_pose(self, hypothesis, translation, rotation, source):
-        """Attach one pose to a hypothesis. The source label survives into pose_source."""
+        """
+        Attach one pose to a hypothesis.
+
+        The source label survives into pose_source.
+        """
         pose_annotation = robokudo.types.annotation.PoseAnnotation()
         pose_annotation.translation = list(translation)
         pose_annotation.rotation = list(
-            robokudo.utils.transform.get_quaternion_from_rotation_matrix(rotation))
+            robokudo.utils.transform.get_quaternion_from_rotation_matrix(rotation)
+        )
         pose_annotation.source = source
         hypothesis.annotations.append(pose_annotation)
 
@@ -214,9 +244,13 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         cas = self.get_cas()
         color = cas.get_copy(CASViews.COLOR_IMAGE)
         depth = cas.get(CASViews.DEPTH_IMAGE)
-        intrinsics = Open3DCameraModelAdapter.to_intrinsic(cas.require_camera_observation().effective_camera_model)
+        intrinsics = Open3DCameraModelAdapter.to_intrinsic(
+            cas.require_camera_observation().effective_camera_model
+        )
 
-        self.depth = np.asarray(depth, dtype=np.float32) * self.descriptor.parameters.depth_scale
+        self.depth = (
+            np.asarray(depth, dtype=np.float32) * self.descriptor.parameters.depth_scale
+        )
         k = intrinsics.intrinsic_matrix
         self.fx, self.fy, self.cx, self.cy = k[0, 0], k[1, 1], k[0, 2], k[1, 2]
 
@@ -232,7 +266,9 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         door_hypothesis = None
         door_points = np.empty((0, 3))
         if doors:
-            door_hypothesis = max(doors, key=lambda dh: dh[0].roi.roi.width * dh[0].roi.roi.height)[0]
+            door_hypothesis = max(
+                doors, key=lambda dh: dh[0].roi.roi.width * dh[0].roi.roi.height
+            )[0]
             plane_box = self.roi_box(door_hypothesis, width, height)
             door_points, _ = self.points_in_box(plane_box)
             plane = self.fit_plane(door_points)
@@ -273,17 +309,24 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
                 continue
 
             signed = points @ normal + plane_d
-            selected = ((signed > self.descriptor.parameters.min_protrusion) &
-                        (signed < self.descriptor.parameters.max_protrusion))
+            selected = (signed > self.descriptor.parameters.min_protrusion) & (
+                signed < self.descriptor.parameters.max_protrusion
+            )
             count = int(selected.sum())
             if count < self.descriptor.parameters.min_handle_points:
-                results.append((box, None,
-                                f"only {count} points in front of the plane "
-                                f"({100.0 * count / max(len(points), 1):.0f} % of the box)"))
+                results.append(
+                    (
+                        box,
+                        None,
+                        f"only {count} points in front of the plane "
+                        f"({100.0 * count / max(len(points), 1):.0f} % of the box)",
+                    )
+                )
                 continue
 
-            pose = self.grasp_pose_from_points(points[selected], signed[selected],
-                                               normal, door_center)
+            pose = self.grasp_pose_from_points(
+                points[selected], signed[selected], normal, door_center
+            )
             if pose is None:
                 results.append((box, None, "handle axis is degenerate"))
                 continue
@@ -310,18 +353,28 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
             horizontal = np.degrees(np.arccos(min(abs(axis[0]), 1.0)))
             orientation = "horizontal" if horizontal < 45 else "vertical"
 
-            reach = self.descriptor.parameters.jaw_pad_depth + self.descriptor.parameters.tip_clearance
+            reach = (
+                self.descriptor.parameters.jaw_pad_depth
+                + self.descriptor.parameters.tip_clearance
+            )
             if protrusion < reach:
-                messages.append(f"fingers reach {reach * 100:.1f} cm but the handle only "
-                                f"stands {protrusion * 100:.1f} cm out")
+                messages.append(
+                    f"fingers reach {reach * 100:.1f} cm but the handle only "
+                    f"stands {protrusion * 100:.1f} cm out"
+                )
 
             grasped.append(hypothesis)
-            results.append((box, (pixels[selected], translation),
-                            f"{orientation}, {protrusion * 100:.1f} cm out, "
-                            f"{translation[2]:.2f} m away, "
-                            f"jaws {2 * half_gap * 100:.1f} cm apart, "
-                            f"handle {length * 100:.1f} cm, grasp {offset * 100:.1f} cm "
-                            f"off centre towards the free end ({reason})"))
+            results.append(
+                (
+                    box,
+                    (pixels[selected], translation),
+                    f"{orientation}, {protrusion * 100:.1f} cm out, "
+                    f"{translation[2]:.2f} m away, "
+                    f"jaws {2 * half_gap * 100:.1f} cm apart, "
+                    f"handle {length * 100:.1f} cm, grasp {offset * 100:.1f} cm "
+                    f"off centre towards the free end ({reason})",
+                )
+            )
 
         if not handles:
             messages.append("no handle detected")
@@ -343,11 +396,17 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
     def project(self, point):
         if point[2] <= 1e-6:
             return None
-        return (int(round(point[0] * self.fx / point[2] + self.cx)),
-                int(round(point[1] * self.fy / point[2] + self.cy)))
+        return (
+            int(round(point[0] * self.fx / point[2] + self.cx)),
+            int(round(point[1] * self.fy / point[2] + self.cy)),
+        )
 
     def draw_grasp_point(self, image, translation):
-        """One dot on the spot the gripper should close on. Nothing else."""
+        """
+        One dot on the spot the gripper should close on.
+
+        Nothing else.
+        """
         origin = self.project(translation)
         if origin is None:
             return
@@ -377,5 +436,7 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         if geometries and self.get_cas().contains(CASViews.CLOUD):
             cloud = self.get_cas().get(CASViews.CLOUD)
             self.get_annotator_output_struct().set_geometries([cloud] + geometries)
-        self.feedback_message = (f'{"; ".join(messages)} | '
-                                 f'Processing took {(default_timer() - start_timer):.4f}s')
+        self.feedback_message = (
+            f"{'; '.join(messages)} | "
+            f"Processing took {(default_timer() - start_timer):.4f}s"
+        )

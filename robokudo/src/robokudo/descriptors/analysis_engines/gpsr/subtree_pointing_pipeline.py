@@ -17,8 +17,11 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
         # the pose model lies next to our weights, outside CRAM
-        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
-            ros_pkg_name='robokudo_suturo', relative_path='weights')
+        human_descriptor.parameters.models_directory = (
+            FileLoader.get_path_to_file_in_ros_package(
+                ros_pkg_name="robokudo_suturo", relative_path="weights"
+            )
+        )
         human_descriptor.parameters.generate_clouds_for_keypoints = True
 
         human_pointing_descriptor = HumanPointingAnnotator.Descriptor()
@@ -27,11 +30,13 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         human_pointing_descriptor.parameters.max_pointing_angle = 35
 
         seq = py_trees.composites.Sequence("subtree_pointing_pipeline", memory=True)
-        seq.add_children([
-            HumanAndPoseAnnotator(descriptor=human_descriptor),
-            ClusterPositionAnnotator(),
-            HumanPointingAnnotator(descriptor=human_pointing_descriptor),
-            BeliefStateAnnotator(),
-            GeneratePointingResult(),
-        ])
+        seq.add_children(
+            [
+                HumanAndPoseAnnotator(descriptor=human_descriptor),
+                ClusterPositionAnnotator(),
+                HumanPointingAnnotator(descriptor=human_pointing_descriptor),
+                BeliefStateAnnotator(),
+                GeneratePointingResult(),
+            ]
+        )
         return seq

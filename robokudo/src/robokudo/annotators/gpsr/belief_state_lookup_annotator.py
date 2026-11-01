@@ -9,11 +9,13 @@ from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 
 
 class BeliefStateLookupAnnotator(BaseAnnotator):
-    """Returns BeliefState entries as JSON in text_result.
-      With 3 cases:
-      uid set: single entry by ID
-      description[0]: all entries matching classname/yolo_label/semantic_label
-      nothing set: all known entries persons and objects
+    """
+    Returns BeliefState entries as JSON in text_result.
+
+    With 3 cases:
+    uid set: single entry by ID
+    description[0]: all entries matching classname/yolo_label/semantic_label
+    nothing set: all known entries persons and objects
     """
 
     def __init__(self, name="BeliefStateLookupAnnotator", *args, **kwargs):

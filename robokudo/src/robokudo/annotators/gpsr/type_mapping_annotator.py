@@ -11,10 +11,15 @@ from robokudo.annotators.core import BaseAnnotator
 class TypeMappingAnnotator(BaseAnnotator):
     """
     Adds a mapped Classification to each ObjectHypothesis based on a mapping file.
+
     Ensures the mapped Classification is the first Classification on the OH.
     """
 
-    def __init__(self, name="TypeMappingAnnotator", mapping_filename: str = "mapping_perception_semantic-annotations.json"):
+    def __init__(
+        self,
+        name="TypeMappingAnnotator",
+        mapping_filename: str = "mapping_perception_semantic-annotations.json",
+    ):
         super().__init__(name=name)
         self._type_map = {}
         try:
@@ -60,6 +65,8 @@ class TypeMappingAnnotator(BaseAnnotator):
                 mapped_classification = robokudo.types.annotation.Classification()
                 mapped_classification.classname = mapped
                 mapped_classification.source = self.name
-                oh.annotations = [mapped_classification] + classifications + non_classifications
+                oh.annotations = (
+                    [mapped_classification] + classifications + non_classifications
+                )
 
         return py_trees.common.Status.SUCCESS

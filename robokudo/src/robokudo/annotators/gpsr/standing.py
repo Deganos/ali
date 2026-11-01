@@ -16,6 +16,7 @@ import robokudo.utils.o3d_helper
 import robokudo.utils.transform
 from robokudo.annotators.human_and_pose import PoseKeypoint
 
+
 class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
         class Parameters:
@@ -26,11 +27,17 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
                 self.keypoint_confidence_threshold = 0.5
 
                 # Thresholds used for standing detection.
-                self.min_rel_vertical = 0.6      # Person must be significantly taller than wide.
-                self.max_rel_horizontal = 0.45    # Horizontal spread must be limited.
-                self.min_shoulder_over_hip = 0.25 # Shoulders must be clearly above the hips.
-                self.min_hip_over_knee = 0.30     # Hips must be clearly above the knees.
-                self.min_head_over_shoulder = 0.10 # Head must be above the shoulder line.
+                self.min_rel_vertical = (
+                    0.6  # Person must be significantly taller than wide.
+                )
+                self.max_rel_horizontal = 0.45  # Horizontal spread must be limited.
+                self.min_shoulder_over_hip = (
+                    0.25  # Shoulders must be clearly above the hips.
+                )
+                self.min_hip_over_knee = 0.30  # Hips must be clearly above the knees.
+                self.min_head_over_shoulder = (
+                    0.10  # Head must be above the shoulder line.
+                )
 
         parameters = Parameters()
 
@@ -54,12 +61,12 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
         # Process each detected human individually.
         for human_hypothesis in human_hypotheses:
             keypoint_annotations = robokudo.cas.CAS.filter_by_type(
-                robokudo.types.human.KeypointAnnotation,
-                human_hypothesis.annotations
+                robokudo.types.human.KeypointAnnotation, human_hypothesis.annotations
             )
             # Only use 2D keypoints for pose analysis.
             keypoint_2d_annotations = [
-                a for a in keypoint_annotations
+                a
+                for a in keypoint_annotations
                 if a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION
             ]
 
@@ -83,6 +90,7 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
         return py_trees.common.Status.SUCCESS
 
         # Determines whether the given keypoints indicate a standing posture.
+
     def keypoints_standing(self, keypoint_2d_annotation):
         p = self.descriptor.parameters
         th = p.keypoint_confidence_threshold
@@ -97,7 +105,10 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
         nose = keypoint_2d_annotation.keypoints[PoseKeypoint.NOSE]
 
         # Check upper body visibility
-        upper_ok = min(left_shoulder.confidence, right_shoulder.confidence, nose.confidence) >= th
+        upper_ok = (
+            min(left_shoulder.confidence, right_shoulder.confidence, nose.confidence)
+            >= th
+        )
 
         # Check left leg visibility
         left_leg_ok = min(left_hip.confidence, left_knee.confidence) >= th
@@ -111,17 +122,23 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
 
             # Collect all x and y coordinates to compute bounding box dimensions.
         xs = [
-            left_hip.x, right_hip.x,
-            left_knee.x, right_knee.x,
-            left_shoulder.x, right_shoulder.x,
-            nose.x
+            left_hip.x,
+            right_hip.x,
+            left_knee.x,
+            right_knee.x,
+            left_shoulder.x,
+            right_shoulder.x,
+            nose.x,
         ]
 
         ys = [
-            left_hip.y, right_hip.y,
-            left_knee.y, right_knee.y,
-            left_shoulder.y, right_shoulder.y,
-            nose.y
+            left_hip.y,
+            right_hip.y,
+            left_knee.y,
+            right_knee.y,
+            left_shoulder.y,
+            right_shoulder.y,
+            nose.y,
         ]
         # Compute vertical and horizontal extent of the detected person.
         vertical_h = max(ys) - min(ys)
@@ -152,11 +169,16 @@ class HumanStandingAnnotator(robokudo.annotators.core.BaseAnnotator):
 
         # Standing heuristic:
         standing = (
-                rel_vertical >= p.min_rel_vertical and  # Body is significantly taller than it is wide
-                rel_horizontal <= p.max_rel_horizontal and  # Horizontal spread is small (not lying)
-                shoulder_hip_diff <= -p.min_shoulder_over_hip and  # Shoulders are clearly above the hips
-                hip_knee_diff <= -p.min_hip_over_knee and  # Hips are clearly above the knees
-                head_shoulder_diff <= -p.min_head_over_shoulder  # Head is positioned above the shoulders
+            rel_vertical
+            >= p.min_rel_vertical  # Body is significantly taller than it is wide
+            and rel_horizontal
+            <= p.max_rel_horizontal  # Horizontal spread is small (not lying)
+            and shoulder_hip_diff
+            <= -p.min_shoulder_over_hip  # Shoulders are clearly above the hips
+            and hip_knee_diff
+            <= -p.min_hip_over_knee  # Hips are clearly above the knees
+            and head_shoulder_diff
+            <= -p.min_head_over_shoulder  # Head is positioned above the shoulders
         )
 
         return standing

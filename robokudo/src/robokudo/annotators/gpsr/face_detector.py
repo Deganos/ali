@@ -21,8 +21,12 @@ from robokudo.cas import CASViews
 
 
 class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
-    """Detect faces in 2D images. This annotator is not provided labels/classes/identification.
-    Based on face_recognition library."""
+    """
+    Detect faces in 2D images.
+
+    This annotator is not provided labels/classes/identification. Based on
+    face_recognition library.
+    """
 
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
         class Parameters:
@@ -33,7 +37,9 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
                 self.with_point_generation = True  # Requires RGB data
                 self.generate_encodings = True
 
-        parameters = Parameters()  # overwrite the parameters explicitly to enable auto-completion
+        parameters = (
+            Parameters()
+        )  # overwrite the parameters explicitly to enable auto-completion
 
     def __init__(self, name="FaceDetector", descriptor=Descriptor()):
         super().__init__(name, descriptor)
@@ -51,20 +57,29 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
             self.depth = self.get_cas().get(CASViews.DEPTH_IMAGE)
             resized_color = None
             try:
-                resized_color = robokudo.utils.cv_helper.get_scaled_color_image_for_depth_image(self.get_cas(),
-                                                                                                self.color)
+                resized_color = (
+                    robokudo.utils.cv_helper.get_scaled_color_image_for_depth_image(
+                        self.get_cas(), self.color
+                    )
+                )
                 robokudo.utils.annotator_helper.scale_camera_intrinsics(self)
             except RuntimeError as e:
                 self.rk_logger.error(
-                    "No color to depth ratio set by your camera driver! Can't scale image for Point Cloud creation.")
+                    "No color to depth ratio set by your camera driver! Can't scale image for Point Cloud creation."
+                )
                 raise Exception(
-                    "No color to depth ratio set by your camera driver! Can't scale image for Point Cloud creation.")
+                    "No color to depth ratio set by your camera driver! Can't scale image for Point Cloud creation."
+                )
         else:
             resized_color = self.color
 
         # Downsample camera image before face recognition, if necessary
-        color_downsampled = cv2.resize(resized_color, (0, 0), fx=self.descriptor.parameters.scale_factor,
-                                       fy=self.descriptor.parameters.scale_factor)
+        color_downsampled = cv2.resize(
+            resized_color,
+            (0, 0),
+            fx=self.descriptor.parameters.scale_factor,
+            fy=self.descriptor.parameters.scale_factor,
+        )
 
         # Actual face detection
         face_locations = face_recognition.face_locations(color_downsampled)
@@ -77,12 +92,19 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
 
         # Each detected face will be considered as an Object Detection for now
         idx = 0
-        for (top, right, bottom, left) in face_locations:
-            original_face_location = (top, right, bottom, left)  # store for face encoding computation later on
+        for top, right, bottom, left in face_locations:
+            original_face_location = (
+                top,
+                right,
+                bottom,
+                left,
+            )  # store for face encoding computation later on
 
             # If the color image has been resized to match it with depth data, respect this scaling
             if self.descriptor.parameters.with_point_generation:
-                color2depth_ratio = self.get_cas().get(robokudo.cas.CASViews.COLOR2DEPTH_RATIO)
+                color2depth_ratio = self.get_cas().get(
+                    robokudo.cas.CASViews.COLOR2DEPTH_RATIO
+                )
 
                 if not color2depth_ratio:
                     raise RuntimeError("No Color to Depth Ratio set. Can't continue.")
@@ -90,7 +112,9 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
                 c2d_ratio_x = color2depth_ratio[0]
                 c2d_ratio_y = color2depth_ratio[1]
                 if c2d_ratio_x != c2d_ratio_y:
-                    raise RuntimeError("color to depth ratio x&y is not equal. Can't process.")
+                    raise RuntimeError(
+                        "color to depth ratio x&y is not equal. Can't process."
+                    )
                 top *= 1 / c2d_ratio_x
                 right *= 1 / c2d_ratio_x
                 bottom *= 1 / c2d_ratio_x
@@ -114,21 +138,33 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
             # Actual 3D Point generation for face
             if self.descriptor.parameters.with_point_generation:
                 face_mask = np.zeros_like(self.depth, dtype=numpy.uint8)
-                cv2.rectangle(face_mask, (int(left * c2d_ratio_x), int(top * c2d_ratio_x)),
-                              (int(right * c2d_ratio_x), int(bottom * c2d_ratio_x)), 255, -1)
+                cv2.rectangle(
+                    face_mask,
+                    (int(left * c2d_ratio_x), int(top * c2d_ratio_x)),
+                    (int(right * c2d_ratio_x), int(bottom * c2d_ratio_x)),
+                    255,
+                    -1,
+                )
                 color_rgb = cv2.cvtColor(resized_color, cv2.COLOR_BGR2RGB)
                 depth_masked = copy.deepcopy(self.depth)
-                depth_masked = numpy.where(face_mask == 255, depth_masked, 0)  # mask all depth values
+                depth_masked = numpy.where(
+                    face_mask == 255, depth_masked, 0
+                )  # mask all depth values
 
                 o3d_color = o3d.geometry.Image(color_rgb)
-                o3d_depth = o3d.geometry.Image(depth_masked)  # Please note that depth values should be in mm
-                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d_color, o3d_depth,
-                                                                                convert_rgb_to_intensity=False,
-                                                                                depth_trunc=9.0)
+                o3d_depth = o3d.geometry.Image(
+                    depth_masked
+                )  # Please note that depth values should be in mm
+                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
+                    o3d_color,
+                    o3d_depth,
+                    convert_rgb_to_intensity=False,
+                    depth_trunc=9.0,
+                )
 
                 cloud = o3d.geometry.PointCloud.create_from_rgbd_image(
-                    rgbd_image,
-                    self.cam_intrinsics)
+                    rgbd_image, self.cam_intrinsics
+                )
                 # visualization_img = face_mask
                 human_hypothesis.points = cloud
                 face_annotation.points = cloud
@@ -145,8 +181,9 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
             # Generate an encoding for the detected face if desired
             # The encoding will be used by a classifier to recognize pre-trained people
             if self.descriptor.parameters.generate_encodings:
-                person_encoding = face_recognition.face_encodings(color_downsampled,
-                                                                  known_face_locations=[original_face_location])
+                person_encoding = face_recognition.face_encodings(
+                    color_downsampled, known_face_locations=[original_face_location]
+                )
                 encoding_annotation = robokudo.types.annotation.Encoding()
                 encoding_annotation.encoding = person_encoding
                 encoding_annotation.source = self.name
@@ -157,20 +194,21 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
             idx += 1
 
         # 2D Visualization
-        robokudo.utils.annotator_helper. \
-            draw_bounding_boxes_from_object_hypotheses(visualization_img,
-                                                       object_hypotheses,
-                                                       lambda oh: f"Face-{oh.id}")
+        robokudo.utils.annotator_helper.draw_bounding_boxes_from_object_hypotheses(
+            visualization_img, object_hypotheses, lambda oh: f"Face-{oh.id}"
+        )
         self.get_annotator_output_struct().set_image(visualization_img)
 
         # 3D Visualization
         if self.descriptor.parameters.with_point_generation:
             if len(visualization_clouds) > 0:
-                visualization_cloud = robokudo.utils.o3d_helper.concatenate_clouds(visualization_clouds)
+                visualization_cloud = robokudo.utils.o3d_helper.concatenate_clouds(
+                    visualization_clouds
+                )
                 self.get_annotator_output_struct().set_geometries(visualization_cloud)
             else:
                 self.get_annotator_output_struct().set_geometries([])
 
         end_timer = default_timer()
-        self.feedback_message = f'Processing took {(end_timer - start_timer):.4f}s'
+        self.feedback_message = f"Processing took {(end_timer - start_timer):.4f}s"
         return py_trees.common.Status.SUCCESS

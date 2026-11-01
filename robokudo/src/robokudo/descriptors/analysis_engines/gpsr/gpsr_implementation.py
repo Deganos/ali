@@ -2,48 +2,63 @@ from py_trees.composites import Sequence
 import robokudo.analysis_engine
 from robokudo.annotators.collection_reader import CollectionReaderAnnotator
 from robokudo.annotators.image_preprocessor import ImagePreprocessorAnnotator
-from robokudo.descriptors.factories.cr_descriptor_factory import CollectionReaderDescriptorFactory
+from robokudo.descriptors.factories.cr_descriptor_factory import (
+    CollectionReaderDescriptorFactory,
+)
 from robokudo.annotators.query import QueryAnnotator
 import robokudo.annotators
 from robokudo.idioms import pipeline_init
 from robokudo.pipeline import Pipeline
 from robokudo.tree_components.query_based_task_scheduler import QueryBasedScheduler
 from robokudo.utils.error_handling import catch_and_raise_to_blackboard
+
 # Not yet ported to CRAM (Grounded SAM), the file is still in robokudo_ws:
 # from robokudo_robocup_gpsr.descriptors.analysis_engines.gsam_pipeline import GSamPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_waving_raising_pipeline import \
-    Subtree as Subtree_WavingRaisingPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_human_posture_pipeline import \
-    Subtree as Subtree_HumanPosturePipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_object_detection_pipeline import \
-    Subtree as Subtree_ObjectDetectionPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_pointing_pipeline import \
-    Subtree as Subtree_PointingPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_human_activity_pipeline import \
-    Subtree as Subtree_Human_Activity
+from robokudo.descriptors.analysis_engines.gpsr.subtree_waving_raising_pipeline import (
+    Subtree as Subtree_WavingRaisingPipeline,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_posture_pipeline import (
+    Subtree as Subtree_HumanPosturePipeline,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_object_detection_pipeline import (
+    Subtree as Subtree_ObjectDetectionPipeline,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_pointing_pipeline import (
+    Subtree as Subtree_PointingPipeline,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_activity_pipeline import (
+    Subtree as Subtree_Human_Activity,
+)
+
 # Not yet ported to CRAM (VLM via Ollama), the file is still in robokudo_ws:
 # from robokudo_suturo.descriptors.analysis_engines.subtree_human_attribute_pipeline import \
 #     Subtree as Subtree_Human_Attribute
-from robokudo.descriptors.analysis_engines.gpsr.subtree_human_near_object import \
-    Subtree as Subtree_HumanNearObjectPipeline, FURNITURE
-from robokudo.descriptors.analysis_engines.gpsr.subtree_human_in_room import \
-    Subtree as Subtree_HumanInRoomPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_obj_in_room import \
-    Subtree as Subtree_ObjInRoomPipeline
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_near_object import (
+    Subtree as Subtree_HumanNearObjectPipeline,
+    FURNITURE,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_in_room import (
+    Subtree as Subtree_HumanInRoomPipeline,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_obj_in_room import (
+    Subtree as Subtree_ObjInRoomPipeline,
+)
+
 # Disabled until face_recognition is installed in the CRAM environment:
 # from robokudo.descriptors.analysis_engines.gpsr.subtree_faces import \
 #     Subtree as Subtree_FacesPipeline
-from robokudo.descriptors.analysis_engines.gpsr.subtree_belief_lookup import \
-    Subtree as Subtree_BeliefLookup
-from robokudo.descriptors.analysis_engines.gpsr.subtree_door_pipeline import \
-    Subtree as Subtree_DoorPipeline
+from robokudo.descriptors.analysis_engines.gpsr.subtree_belief_lookup import (
+    Subtree as Subtree_BeliefLookup,
+)
+from robokudo.descriptors.analysis_engines.gpsr.subtree_door_pipeline import (
+    Subtree as Subtree_DoorPipeline,
+)
 # Not yet ported to CRAM (Grounded SAM), the file is still in robokudo_ws:
 # from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_door_pipeline_gsam import \
 #     Subtree as Subtree_DoorGsamPipeline
 
 
 class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
-
     def __init__(self):
         super(AnalysisEngine, self).__init__()
         self.cr = None
@@ -53,7 +68,8 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
 
     def configure_collection_reader(self):
         self.cr = CollectionReaderAnnotator(
-            descriptor=CollectionReaderDescriptorFactory.create_descriptor("hsr_ros2"))
+            descriptor=CollectionReaderDescriptorFactory.create_descriptor("hsr_ros2")
+        )
 
     @catch_and_raise_to_blackboard
     def implementation(self):
@@ -70,13 +86,21 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
         pointing_attributes = ["pointing right", "pointing left"]
         clothes_attributes = ["t shirt", "shirt", "blouse", "sweater", "coat", "jacket"]
         color_attributes = ["blue", "yellow", "black", "white", "red", "orange", "gray"]
-        object_attributes = ["biggest", "largest", "smallest", "heaviest", "lightest", "thinnest"]
-        furniture = ["chair","couch"]
+        object_attributes = [
+            "biggest",
+            "largest",
+            "smallest",
+            "heaviest",
+            "lightest",
+            "thinnest",
+        ]
+        furniture = ["chair", "couch"]
         rooms = ["iai_kitchen", "living_room", "bedroom", "office", "hallway"]
 
         def filter_query_input(type):
             """
             Filters the query input to ensure it is valid.
+
             :param type: The type of the query input.
             :return: True if the query input is valid, False otherwise.
             """
@@ -94,80 +118,91 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
             color = filter_query_input(query.obj.color)
             description = filter_query_input(query.obj.description)
 
-            #TODO query.obj.type = human base case so anpassen, dass wir noch ein fall haben, dass er filtern soll
-            if query.obj.type == 'human':
+            # TODO query.obj.type = human base case so anpassen, dass wir noch ein fall haben, dass er filtern soll
+            if query.obj.type == "human":
                 if color in color_attributes and description in clothes_attributes:
                     if query.obj.location in rooms:
-                        return 'GSamPipelineWithRegion'
-                    return 'GSamPipeline'
+                        return "GSamPipelineWithRegion"
+                    return "GSamPipeline"
                 elif query.obj.location in rooms:
-                    if attribute in waving_raising_attributes + human_posture_attributes + pointing_attributes:
-                        return 'HumanActivityInRoomPipeline'
-                    return 'HumanInRoomPipeline'
+                    if (
+                        attribute
+                        in waving_raising_attributes
+                        + human_posture_attributes
+                        + pointing_attributes
+                    ):
+                        return "HumanActivityInRoomPipeline"
+                    return "HumanInRoomPipeline"
                 elif query.obj.location in furniture:
-                    return 'HumanNearObjectPipeline'
+                    return "HumanNearObjectPipeline"
                 elif attribute in waving_raising_attributes:
-                    return 'WavingRaisingPipeline'
+                    return "WavingRaisingPipeline"
                 elif attribute in human_posture_attributes:
-                    return 'HumanPosturePipeline'
+                    return "HumanPosturePipeline"
                 elif attribute in pointing_attributes:
-                    return 'PointingPipeline'
+                    return "PointingPipeline"
                 elif attribute == "Attribute":
-                    return 'Attribute'
+                    return "Attribute"
                 elif len(query.obj.attribute) >= 2:
-                    return 'HumanActivityFiltered'
+                    return "HumanActivityFiltered"
                 else:
-                    return 'HumanActivity'
-            elif query.obj.type == 'recall':
-                return 'BeliefStateLookupPipeline'
-            elif query.obj.type == 'face':
-                return 'FacePipeline'
-            elif query.obj.type == 'door':
-                return 'DoorPipeline'
-            elif query.obj.type == 'doorgsam':
-                return 'DoorGsamPipeline'
-            elif query.obj.type == 'object':
+                    return "HumanActivity"
+            elif query.obj.type == "recall":
+                return "BeliefStateLookupPipeline"
+            elif query.obj.type == "face":
+                return "FacePipeline"
+            elif query.obj.type == "door":
+                return "DoorPipeline"
+            elif query.obj.type == "doorgsam":
+                return "DoorGsamPipeline"
+            elif query.obj.type == "object":
                 if query.obj.location in rooms:
-                    return 'ObjInRoomPipeline'
+                    return "ObjInRoomPipeline"
                 elif attribute in object_attributes:
-                    return 'GSamPipeline'
+                    return "GSamPipeline"
                 elif attribute and not attribute in object_attributes:
                     return None
                 else:
-                    return 'ObjectDetectionPipeline'
+                    return "ObjectDetectionPipeline"
             else:
                 return None
 
         task_trees = {
-            'WavingRaisingPipeline': Subtree_WavingRaisingPipeline().implementation(),
-            'HumanPosturePipeline': Subtree_HumanPosturePipeline().implementation(),
-            'ObjectDetectionPipeline': Subtree_ObjectDetectionPipeline().implementation(),
-            'PointingPipeline': Subtree_PointingPipeline().implementation(),
+            "WavingRaisingPipeline": Subtree_WavingRaisingPipeline().implementation(),
+            "HumanPosturePipeline": Subtree_HumanPosturePipeline().implementation(),
+            "ObjectDetectionPipeline": Subtree_ObjectDetectionPipeline().implementation(),
+            "PointingPipeline": Subtree_PointingPipeline().implementation(),
             # Not yet ported to CRAM (Grounded SAM):
             # 'GSamPipeline': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
             #                              clothes_attributes=clothes_attributes),
             # 'GSamPipelineWithRegion': GSamPipeline(object_attributes=object_attributes, color_attributes=color_attributes,
             #                                        clothes_attributes=clothes_attributes, with_region_filter=True),
-            'HumanActivityFiltered': Subtree_Human_Activity(with_filter=True).implementation(),
-            'HumanActivity' : Subtree_Human_Activity().implementation(),
+            "HumanActivityFiltered": Subtree_Human_Activity(
+                with_filter=True
+            ).implementation(),
+            "HumanActivity": Subtree_Human_Activity().implementation(),
             # Not yet ported to CRAM (VLM via Ollama):
             # 'Attribute' : Subtree_Human_Attribute().implementation(),
-            'HumanNearObjectPipeline': Subtree_HumanNearObjectPipeline().implementation(),
-            'HumanInRoomPipeline': Subtree_HumanInRoomPipeline().implementation(),
-            'HumanActivityInRoomPipeline': Subtree_HumanInRoomPipeline(with_activity=True).implementation(),
-            'ObjInRoomPipeline': Subtree_ObjInRoomPipeline().implementation(),
+            "HumanNearObjectPipeline": Subtree_HumanNearObjectPipeline().implementation(),
+            "HumanInRoomPipeline": Subtree_HumanInRoomPipeline().implementation(),
+            "HumanActivityInRoomPipeline": Subtree_HumanInRoomPipeline(
+                with_activity=True
+            ).implementation(),
+            "ObjInRoomPipeline": Subtree_ObjInRoomPipeline().implementation(),
             # Disabled until face_recognition is installed in the CRAM environment:
             # 'FacePipeline': Subtree_FacesPipeline(ros_pkg_path='robokudo_robocup_gpsr').implementation(),
-            'BeliefStateLookupPipeline': Subtree_BeliefLookup().implementation(),
-            'DoorPipeline': Subtree_DoorPipeline().implementation(),
+            "BeliefStateLookupPipeline": Subtree_BeliefLookup().implementation(),
+            "DoorPipeline": Subtree_DoorPipeline().implementation(),
             # Not yet ported to CRAM (Grounded SAM):
             # 'DoorGsamPipeline': Subtree_DoorGsamPipeline().implementation(),
         }
 
         task_scheduling = Sequence("Task Scheduling", memory=True)
-        task_scheduling.add_child(QueryBasedScheduler(tasks=task_trees, filter_fn=task_selection))
+        task_scheduling.add_child(
+            QueryBasedScheduler(tasks=task_trees, filter_fn=task_selection)
+        )
 
-        seq = Pipeline('GPSR')
+        seq = Pipeline("GPSR")
         seq.add_children(
             [
                 pipeline_init(),

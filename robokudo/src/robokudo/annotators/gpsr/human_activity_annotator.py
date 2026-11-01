@@ -1,14 +1,14 @@
 """
 This module implements a RoboKudo Annotator: The HumanActivityAnnotator.
-This annotator uses a pretrained CLIP model to classify human activities with a zeroshot approach.
-It distinguishes between mutually exclusive postures (e.g.
-sitting, standing) and gestures (raising, waving, pointing).
 
-Gesture direction (left/right) is not determined here. That is the job of the
-downstream HumanPointingAnnotator.
+This annotator uses a pretrained CLIP model to classify human activities with a zeroshot
+approach. It distinguishes between mutually exclusive postures (e.g. sitting, standing)
+and gestures (raising, waving, pointing).
 
-Author: Ali Talha Sükür
-Created at: 2026-04-14
+Gesture direction (left/right) is not determined here. That is the job of the downstream
+HumanPointingAnnotator.
+
+Author: Ali Talha Sükür Created at: 2026-04-14
 """
 
 from timeit import default_timer
@@ -29,7 +29,9 @@ from robokudo.utils.error_handling import catch_and_raise_to_blackboard
 
 
 class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
-    """Uses CLIP to classify human posture and gestures for each detected person."""
+    """
+    Uses CLIP to classify human posture and gestures for each detected person.
+    """
 
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
         class Parameters:
@@ -54,7 +56,9 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
                 )
                 self.gesture_labels = ("Waving", "Pointing", "Raising", "No gesture")
 
-                self.gesture_threshold = 0.65  # if no gesture score is above this, we use "No gesture"
+                self.gesture_threshold = (
+                    0.65  # if no gesture score is above this, we use "No gesture"
+                )
                 self.save_top_k = 1  # we only save the best gesture per person, important sum of the softmax is 1
 
                 self.clip_model = "openai/clip-vit-large-patch14"
@@ -76,31 +80,35 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         return py_trees.common.Status.SUCCESS
 
     def cutout_human_rois(self, human_hypotheses, upper_body=False):
-        """Extracts person crops from the color image.
+        """
+        Extracts person crops from the color image.
+
         If upper_body_only=True, only the upper 60% used.
         """
         # the CAS holds the color image in OpenCV's BGR order, CLIP expects RGB
-        img = Image.fromarray(cv2.cvtColor(self.get_cas().get(CASViews.COLOR_IMAGE), cv2.COLOR_BGR2RGB))
+        img = Image.fromarray(
+            cv2.cvtColor(self.get_cas().get(CASViews.COLOR_IMAGE), cv2.COLOR_BGR2RGB)
+        )
 
-        #Image height is not required
+        # Image height is not required
         img_width, _ = img.size
         crops = []
         for hh in human_hypotheses:
-            #getting the coordinates from the roi bounding boxes
+            # getting the coordinates from the roi bounding boxes
             x = hh.roi.roi.pos.x
             y = hh.roi.roi.pos.y
             w = hh.roi.roi.width
             h = hh.roi.roi.height
 
             if upper_body:
-                padding    = int(w * 0.2)
-                left   = max(0, x - padding)
-                right  = min(img_width, x + w + padding)
+                padding = int(w * 0.2)
+                left = max(0, x - padding)
+                right = min(img_width, x + w + padding)
                 bottom = y + int(h * 0.6)
             else:
                 left = x
                 right = x + w
-                bottom =  y + h
+                bottom = y + h
 
             crop = img.crop((left, y, right, bottom))
 
@@ -112,30 +120,54 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         return crops
 
     def analyze_human_hypotheses(self):
-        """Runs CLIP on all detected people and writes annotations for each one."""
-
-        human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
+        """
+        Runs CLIP on all detected people and writes annotations for each one.
+        """
+        human_hypotheses = self.get_cas().filter_annotations_by_type(
+            robokudo.types.scene.HumanHypothesis
+        )
         if not human_hypotheses:
             return
 
-        crops_full  = self.cutout_human_rois(human_hypotheses)
+        crops_full = self.cutout_human_rois(human_hypotheses)
         crops_upper = self.cutout_human_rois(human_hypotheses, upper_body=True)
 
         # prepare the inputs for clip
         inputs_posture = self.processor(
-            text=list(self.parameters.posture_classes), images=crops_full,
-            return_tensors="pt", padding=True
+            text=list(self.parameters.posture_classes),
+            images=crops_full,
+            return_tensors="pt",
+            padding=True,
         )
         inputs_gesture = self.processor(
-            text=list(self.parameters.gesture_classes), images=crops_upper,
-            return_tensors="pt", padding=True
+            text=list(self.parameters.gesture_classes),
+            images=crops_upper,
+            return_tensors="pt",
+            padding=True,
         )
 
         with torch.no_grad():
-            probs_posture  = self.model(**inputs_posture).logits_per_image.softmax(dim=1).detach().numpy()
-            probs_gesture  = self.model(**inputs_gesture).logits_per_image.softmax(dim=1).detach().numpy()
-            raw_feats      = self.model.get_image_features(pixel_values=inputs_posture["pixel_values"]).pooler_output
-            image_features = (raw_feats / raw_feats.norm(dim=-1, keepdim=True)).detach().cpu().numpy()
+            probs_posture = (
+                self.model(**inputs_posture)
+                .logits_per_image.softmax(dim=1)
+                .detach()
+                .numpy()
+            )
+            probs_gesture = (
+                self.model(**inputs_gesture)
+                .logits_per_image.softmax(dim=1)
+                .detach()
+                .numpy()
+            )
+            raw_feats = self.model.get_image_features(
+                pixel_values=inputs_posture["pixel_values"]
+            ).pooler_output
+            image_features = (
+                (raw_feats / raw_feats.norm(dim=-1, keepdim=True))
+                .detach()
+                .cpu()
+                .numpy()
+            )
 
         for hh, posture_dist, gesture_dist, img_feat in zip(
             human_hypotheses, probs_posture, probs_gesture, image_features
@@ -145,8 +177,9 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         self.visualize_humans(human_hypotheses)
 
     def annotate_person(self, hh, posture_dist, gesture_dist, img_feat):
-        """Writes posture, gesture and CLIP embedding annotations for one person."""
-
+        """
+        Writes posture, gesture and CLIP embedding annotations for one person.
+        """
         # save the CLIP embedding to the BeliefState
         clip_encoding = Encoding()
         clip_encoding.encoding = img_feat
@@ -161,7 +194,9 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         hh.annotations.append(posture_ann)
 
         # to visualize the posture winner and the values of each one
-        for i, (label, score) in enumerate(zip(self.parameters.posture_labels, posture_dist)):
+        for i, (label, score) in enumerate(
+            zip(self.parameters.posture_labels, posture_dist)
+        ):
             self.rk_logger.info(
                 f"  Posture HH {hh.id}: {label} = {score:.2f}"
                 + ("  <-- WINNER" if i == posture_dist.argmax() else "")
@@ -173,7 +208,11 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         for label, score in zip(self.parameters.gesture_labels, gesture_dist):
             self.rk_logger.info(
                 f"    {label} = {score:.2f}"
-                + ("  <-- THRESHOLD" if score >= self.parameters.gesture_threshold else "")
+                + (
+                    "  <-- THRESHOLD"
+                    if score >= self.parameters.gesture_threshold
+                    else ""
+                )
             )
 
         # Select top k gesture labels above threshold, highest scores first
@@ -190,7 +229,9 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
                 gesture_ann.type = label
                 gesture_ann.source = type(self).__name__
                 hh.annotations.append(gesture_ann)
-                self.rk_logger.info(f"Gesture for HH {hh.id}: {label} ({gesture_dist[idx]:.2f})")
+                self.rk_logger.info(
+                    f"Gesture for HH {hh.id}: {label} ({gesture_dist[idx]:.2f})"
+                )
                 gesture_count += 1
 
         # If no gesture passed the threshold annotate this person with "No gesture"
@@ -202,7 +243,9 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
             self.rk_logger.info(f"Gesture for HH {hh.id}: No gesture")
 
     def visualize_humans(self, human_hypotheses):
-        """Draws bounding boxes with posture and gesture labels into the output image."""
+        """
+        Draws bounding boxes with posture and gesture labels into the output image.
+        """
         img = Image.fromarray(self.get_cas().get_copy(CASViews.COLOR_IMAGE))
         draw = ImageDraw.Draw(img)
 
@@ -211,13 +254,23 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
             w, h = hh.roi.roi.width, hh.roi.roi.height
             draw.rectangle((x, y, x + w, y + h), outline=(0, 255, 0), width=2)
 
-            activities = [a for a in hh.annotations if isinstance(a, robokudo.types.human.ActivityAnnotation)]
-            postures = [a for a in activities if a.type in self.parameters.posture_labels]
-            gestures = [a for a in activities if a.type in self.parameters.gesture_labels]
+            activities = [
+                a
+                for a in hh.annotations
+                if isinstance(a, robokudo.types.human.ActivityAnnotation)
+            ]
+            postures = [
+                a for a in activities if a.type in self.parameters.posture_labels
+            ]
+            gestures = [
+                a for a in activities if a.type in self.parameters.gesture_labels
+            ]
 
             if postures:
                 draw.text((x, y - 20), postures[0].type, fill=(0, 255, 0))
             if gestures:
-                draw.text((x, y - 40), ", ".join(g.type for g in gestures), fill=(255, 255, 0))
+                draw.text(
+                    (x, y - 40), ", ".join(g.type for g in gestures), fill=(255, 255, 0)
+                )
 
         self.get_annotator_output_struct().set_image(np.array(img))

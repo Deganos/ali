@@ -38,7 +38,9 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
                 # to decide if a human is waving or not
                 self.waving_decision_factor = 0.2
 
-        parameters = Parameters()  # overwrite the parameters explicitly to enable auto-completion
+        parameters = (
+            Parameters()
+        )  # overwrite the parameters explicitly to enable auto-completion
 
     def __init__(self, name="HumanWavingAnnotator", descriptor=Descriptor()):
         super().__init__(name, descriptor)
@@ -50,12 +52,15 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         self.color = self.get_cas().get(robokudo.cas.CASViews.COLOR_IMAGE)
         self.cloud = self.get_cas().get(robokudo.cas.CASViews.CLOUD)
 
-        human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
+        human_hypotheses = self.get_cas().filter_annotations_by_type(
+            robokudo.types.scene.HumanHypothesis
+        )
 
         if self.descriptor.parameters.check_activity:
             # only process humans the HumanActivityAnnotator already tagged as no gesture
             human_hypotheses = [
-                hh for hh in human_hypotheses
+                hh
+                for hh in human_hypotheses
                 if any(
                     isinstance(a, robokudo.types.human.ActivityAnnotation)
                     and a.source == "HumanActivityAnnotator"
@@ -70,10 +75,14 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         all_vis_geometries = [self.cloud]
 
         for human_hypothesis in human_hypotheses:
-            keypoint_annotations = robokudo.cas.CAS.filter_by_type(robokudo.types.human.KeypointAnnotation,
-                                                                   human_hypothesis.annotations)
-            keypoint_2d_annotations = [a for a in keypoint_annotations if
-                                       a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION]
+            keypoint_annotations = robokudo.cas.CAS.filter_by_type(
+                robokudo.types.human.KeypointAnnotation, human_hypothesis.annotations
+            )
+            keypoint_2d_annotations = [
+                a
+                for a in keypoint_annotations
+                if a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION
+            ]
 
             # Human detected, but no keypoint annotations. Can't estimate waving.
             if len(keypoint_2d_annotations) == 0:
@@ -84,18 +93,18 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
             raising = self.keypoints_suggest_arm_raising(keypoint_2d_annotation)
             if raising == "left":
                 activity = robokudo.types.human.ActivityAnnotation()
-                activity.type = 'raising right arm'
+                activity.type = "raising right arm"
                 activity.source = type(self).__name__
                 human_hypothesis.annotations.append(activity)
             elif raising == "right":
                 activity = robokudo.types.human.ActivityAnnotation()
-                activity.type = 'raising left arm'
+                activity.type = "raising left arm"
                 activity.source = type(self).__name__
                 human_hypothesis.annotations.append(activity)
             waving = self.keypoints_suggest_waving(keypoint_2d_annotation)
             if waving:
                 activity = robokudo.types.human.ActivityAnnotation()
-                activity.type = 'waving'
+                activity.type = "waving"
                 activity.source = type(self).__name__
                 human_hypothesis.annotations.append(activity)
 
@@ -103,10 +112,12 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         self.get_annotator_output_struct().set_image(copy.deepcopy(self.color))
 
         end_timer = default_timer()
-        self.feedback_message = f'Processing took {(end_timer - start_timer):.4f}s'
+        self.feedback_message = f"Processing took {(end_timer - start_timer):.4f}s"
         return py_trees.common.Status.SUCCESS
 
-    def keypoints_suggest_arm_raising(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
+    def keypoints_suggest_arm_raising(
+        self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation
+    ):
         left_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_WRIST]
         right_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_WRIST]
         left_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_SHOULDER]
@@ -117,20 +128,32 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         left_eye_shoulder_distance_pixel = left_shoulder.y - left_eye.y
         right_eye_shoulder_distance_pixel = right_shoulder.y - right_eye.y
 
-        left_above_eye_level_offset_pixel = (left_eye_shoulder_distance_pixel
-                                             * self.descriptor.parameters.waving_decision_factor)
-        right_above_eye_level_offset_pixel = (right_eye_shoulder_distance_pixel
-                                              * self.descriptor.parameters.waving_decision_factor)
+        left_above_eye_level_offset_pixel = (
+            left_eye_shoulder_distance_pixel
+            * self.descriptor.parameters.waving_decision_factor
+        )
+        right_above_eye_level_offset_pixel = (
+            right_eye_shoulder_distance_pixel
+            * self.descriptor.parameters.waving_decision_factor
+        )
 
-        if left_wrist.y < (left_shoulder.y - left_above_eye_level_offset_pixel) and \
-                left_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
+        if (
+            left_wrist.y < (left_shoulder.y - left_above_eye_level_offset_pixel)
+            and left_wrist.confidence
+            > self.descriptor.parameters.keypoint_confidence_threshold
+        ):
             return "right"
-        if right_wrist.y < (right_shoulder.y - right_above_eye_level_offset_pixel) and \
-                right_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
+        if (
+            right_wrist.y < (right_shoulder.y - right_above_eye_level_offset_pixel)
+            and right_wrist.confidence
+            > self.descriptor.parameters.keypoint_confidence_threshold
+        ):
             return "left"
         return None
 
-    def keypoints_suggest_waving(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
+    def keypoints_suggest_waving(
+        self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation
+    ):
         left_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_WRIST]
         right_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_WRIST]
         left_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_SHOULDER]
@@ -145,17 +168,27 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         left_eye_shoulder_distance_pixel = left_shoulder.y - left_eye.y
         right_eye_shoulder_distance_pixel = right_shoulder.y - right_eye.y
 
-        left_above_eye_level_offset_pixel = (left_eye_shoulder_distance_pixel
-                                             * self.descriptor.parameters.waving_decision_factor)
-        right_above_eye_level_offset_pixel = (right_eye_shoulder_distance_pixel
-                                              * self.descriptor.parameters.waving_decision_factor)
+        left_above_eye_level_offset_pixel = (
+            left_eye_shoulder_distance_pixel
+            * self.descriptor.parameters.waving_decision_factor
+        )
+        right_above_eye_level_offset_pixel = (
+            right_eye_shoulder_distance_pixel
+            * self.descriptor.parameters.waving_decision_factor
+        )
 
         # y coordinates start with 0 from the top of the image
-        if left_wrist.y < (left_eye.y - left_above_eye_level_offset_pixel) and \
-                left_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
+        if (
+            left_wrist.y < (left_eye.y - left_above_eye_level_offset_pixel)
+            and left_wrist.confidence
+            > self.descriptor.parameters.keypoint_confidence_threshold
+        ):
             return True
-        if right_wrist.y < (right_eye.y - right_above_eye_level_offset_pixel) and \
-                right_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
+        if (
+            right_wrist.y < (right_eye.y - right_above_eye_level_offset_pixel)
+            and right_wrist.confidence
+            > self.descriptor.parameters.keypoint_confidence_threshold
+        ):
             return True
 
         return False

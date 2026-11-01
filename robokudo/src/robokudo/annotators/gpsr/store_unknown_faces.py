@@ -12,7 +12,9 @@ import robokudo.types.scene
 from robokudo.cas import CASViews
 
 import os
+
 os.environ["QT_API"] = "pyqt5"
+
 
 class StoreFaces(robokudo.annotators.core.ThreadedAnnotator):
     class Descriptor(robokudo.annotators.core.BaseAnnotator.Descriptor):
@@ -30,13 +32,18 @@ class StoreFaces(robokudo.annotators.core.ThreadedAnnotator):
 
     @robokudo.utils.error_handling.catch_and_raise_to_blackboard
     def compute(self):
-        if self.descriptor.parameters.ros_pkg_path is None or self.descriptor.parameters.ros_pkg_path is None:
-            raise 'Path is not set'
+        if (
+            self.descriptor.parameters.ros_pkg_path is None
+            or self.descriptor.parameters.ros_pkg_path is None
+        ):
+            raise "Path is not set"
 
         start_timer = default_timer()
 
         # Get all human hypothesis
-        human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
+        human_hypotheses = self.get_cas().filter_annotations_by_type(
+            robokudo.types.scene.HumanHypothesis
+        )
 
         for annotation in human_hypotheses:
             # Check if the human_hypothesis already has a classification
@@ -69,38 +76,37 @@ class StoreFaces(robokudo.annotators.core.ThreadedAnnotator):
                     file_path = full_path
 
                     # Store unknown image under a unique id
-                    file_name = self._get_id(full_path) + '.png'
+                    file_name = self._get_id(full_path) + ".png"
                     file = os.path.join(file_path, file_name)
-                    cropped_image = color_image[y_min:y_max,x_min:x_max]
+                    cropped_image = color_image[y_min:y_max, x_min:x_max]
                     image = Image.fromarray(cropped_image)
                     image.save(file)
 
                     # Write Annotation with id of people
                     classification = robokudo.types.annotation.Classification()
                     classification.source = self.name
-                    classification.classification_type = 'face'
+                    classification.classification_type = "face"
                     classification.classname = file_name.split(".")[0]
                     annotation.annotations.append(classification)
 
-
         end_timer = default_timer()
-        self.feedback_message = f'Processing took {(end_timer - start_timer):.4f}s'
+        self.feedback_message = f"Processing took {(end_timer - start_timer):.4f}s"
         return py_trees.common.Status.SUCCESS
 
     def _check_if_class_exists(self, human_hypothesis):
-        '''
-        This Method returns true, if for a human hypothesis a file already exist and false if not
-        '''
+        """
+        This Method returns true, if for a human hypothesis a file already exist and
+        false if not.
+        """
         if not isinstance(human_hypothesis, robokudo.types.scene.HumanHypothesis):
-            raise("Check if class exists receives a wrong type")
-
+            raise ("Check if class exists receives a wrong type")
 
         for classification in human_hypothesis.annotations:
-            #print(type(classification))
+            # print(type(classification))
             if isinstance(classification, robokudo.types.annotation.Classification):
-                print(f'Detect {classification.classname}, it\'s a familiar face')
+                print(f"Detect {classification.classname}, it's a familiar face")
                 return True
-        print('Detect unfamiliar face, create a new file for his face!')
+        print("Detect unfamiliar face, create a new file for his face!")
         return False
 
     def _get_id(self, path):
@@ -115,4 +121,3 @@ class StoreFaces(robokudo.annotators.core.ThreadedAnnotator):
             if not str(i) in names:
                 return str(i)
         raise "Coudn't find Id to store faces"
-

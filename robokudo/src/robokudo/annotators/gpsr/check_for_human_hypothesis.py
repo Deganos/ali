@@ -2,10 +2,13 @@ import robokudo
 import py_trees
 import robokudo.annotators
 import robokudo.types.scene
+
+
 class CheckForHumanHypothesis(robokudo.annotators.core.BaseAnnotator):
     """
     This Annotator checks the cas, if it already contains a HumanHypothesis.
     """
+
     def __init__(self, name="CheckForHumanHypothesis"):
         super().__init__(name=name)
 
@@ -14,4 +17,4 @@ class CheckForHumanHypothesis(robokudo.annotators.core.BaseAnnotator):
         for annotation in annotations:
             if isinstance(annotation, robokudo.types.scene.HumanHypothesis):
                 return py_trees.common.Status.SUCCESS
-        raise AttributeError('No human detected within the area!')
+        raise AttributeError("No human detected within the area!")

@@ -83,6 +83,13 @@ class FilterHumanByActivityAnnotator(BaseAnnotator):
                 cv2.rectangle(overlay, (x, y), (x + w, y + h), color, -1)
                 cv2.addWeighted(overlay, 0.5, img, 0.5, 0, img)
             cv2.rectangle(img, (x, y), (x + w, y + h), color, 3)
-            cv2.putText(img, "match" if kept else "filtered", (x, max(y - 8, 12)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+            cv2.putText(
+                img,
+                "match" if kept else "filtered",
+                (x, max(y - 8, 12)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                color,
+                2,
+            )
         self.get_annotator_output_struct().set_image(img)

@@ -11,30 +11,37 @@ from robokudo.annotators.gpsr.store_unknown_faces import StoreFaces
 from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 from robokudo.annotators.gpsr.filter_objects_by_area import FilterObjectsByArea
 from robokudo.annotators.gpsr.generate_all_annotations import GenerateAllQueryResult
-from robokudo.annotators.gpsr.parametrize_human_classifier import ParametrizeHumanClassifyAnnotator
+from robokudo.annotators.gpsr.parametrize_human_classifier import (
+    ParametrizeHumanClassifyAnnotator,
+)
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):
-    def __init__(self, ros_pkg_path='robokudo_robocup_receptionist'):
+    def __init__(self, ros_pkg_path="robokudo_robocup_receptionist"):
         self.ros_pkg_path = ros_pkg_path
 
     def implementation(self, name=None, *args, **kwargs):
-        """ Create a basic pipeline that does tabletop segmentation """
-
+        """
+        Create a basic pipeline that does tabletop segmentation.
+        """
         face_classifcation_descriptor = FaceClassification.Descriptor()
         face_classifcation_descriptor.parameters.ros_pkg_path = self.ros_pkg_path
-        face_classifcation_descriptor.parameters.data_path = 'faces'
+        face_classifcation_descriptor.parameters.data_path = "faces"
         file_loader = robokudo.utils.file_loader.FileLoader()
         try:
-            full_path = Path(file_loader.get_path_to_file_in_ros_package(
-                ros_pkg_name=self.ros_pkg_path,
-                relative_path='faces',
-            ))
+            full_path = Path(
+                file_loader.get_path_to_file_in_ros_package(
+                    ros_pkg_name=self.ros_pkg_path,
+                    relative_path="faces",
+                )
+            )
         except Exception:
-            pkg_xml = Path(file_loader.get_path_to_file_in_ros_package(
-                ros_pkg_name=self.ros_pkg_path,
-                relative_path='package.xml',
-            ))
+            pkg_xml = Path(
+                file_loader.get_path_to_file_in_ros_package(
+                    ros_pkg_name=self.ros_pkg_path,
+                    relative_path="package.xml",
+                )
+            )
             full_path = pkg_xml.parent / "faces"
         full_path.mkdir(parents=True, exist_ok=True)
 
@@ -50,20 +57,24 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
 
         store_faces_descriptor = StoreFaces.Descriptor()
         store_faces_descriptor.parameters.ros_pkg_path = self.ros_pkg_path
-        store_faces_descriptor.parameters.data_path = 'faces'
+        store_faces_descriptor.parameters.data_path = "faces"
         store_faces_descriptor.parameters.noise = 5
 
         human_classifier = FaceClassification(descriptor=face_classifcation_descriptor)
 
         seq = py_trees.composites.Sequence("subtree_faces", memory=True)
-        seq.add_children([
-            FaceDetector(),
-            ClusterPositionAnnotator(),
-            FilterObjectsByArea(),
-            ParametrizeHumanClassifyAnnotator(human_classifier, ros_pkg_path=self.ros_pkg_path),
-            human_classifier,
-            StoreFaces(descriptor=store_faces_descriptor),
-            BeliefStateAnnotator(),
-            GenerateAllQueryResult()
-        ])
+        seq.add_children(
+            [
+                FaceDetector(),
+                ClusterPositionAnnotator(),
+                FilterObjectsByArea(),
+                ParametrizeHumanClassifyAnnotator(
+                    human_classifier, ros_pkg_path=self.ros_pkg_path
+                ),
+                human_classifier,
+                StoreFaces(descriptor=store_faces_descriptor),
+                BeliefStateAnnotator(),
+                GenerateAllQueryResult(),
+            ]
+        )
         return seq

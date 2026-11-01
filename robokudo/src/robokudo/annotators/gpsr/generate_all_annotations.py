@@ -218,78 +218,79 @@ from robokudo.annotators.gpsr.gpsr_results import camera_header
 #         goal_handle.succeed()
 #         return answer
 
-    # """
-    # def execute_cb(self, goal):
-    #     # Warning: Exception happening in this callback might not crash your program and hide.
-    #     # When it is not executed completely, look for lines that throw.
-    #
-    #     # publish info to the console for the user
-    #     rk_logger = logging.getLogger(robokudo.defs.PACKAGE_NAME)
-    #     rk_logger.info(f"Received query: {goal}")
-    #     self.new_query = goal
-    #     self.query = goal
-    #
-    #     rate = self.create_rate(50)  # in hz
-    #
-    #     # Wait until the QueryAnnotator has called start_processing on the AS.
-    #     rk_logger.info(f"Begin waiting for new_query")
-    #     while self.new_query is not None:
-    #         rate.sleep()
-    #
-    #     feedback_queue: queue.Queue = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_FEEDBACK)
-    #
-    #     rk_logger.info(f"Start watching")
-    #     while True:
-    #         # Check if preempt is ready to be completed
-    #         preempted_acknowledged = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_PREEMPT_ACK)
-    #         if preempted_acknowledged is True:
-    #             self.reset_bookkeeping_vars()
-    #             self._as.set_preempted()
-    #             return
-    #
-    #         # Check for errors
-    #         if robokudo.utils.error_handling.get_blackboard_exception() is not None:
-    #             rk_logger.info(f"QI catched error")
-    #             # Atleast one of the annotators failed - Abort and reset exception conditions
-    #             self.reset_bookkeeping_vars()
-    #
-    #             exception_text = str(robokudo.utils.error_handling.get_blackboard_exception())
-    #             robokudo.utils.error_handling.clear_blackboard_exception()
-    #             self._as.set_aborted(text=exception_text)
-    #             return
-    #
-    #         # Check for preempt request and put request info on the Tree
-    #         # Atleast one of the Annotators/Behaviors have to acknowledge in order
-    #         # finish the preemption
-    #         if self._as.is_preempt_requested() and not self.preempt_message_printed:
-    #             rk_logger.info(f"Query Interface received preempt request")
-    #             self.preempt_message_printed = True
-    #             py_trees.blackboard.Blackboard().set(BBIdentifier.QUERY_PREEMPT_REQUESTED, True)
-    #             continue
-    #
-    #         # Check for feedback messages to be sent
-    #         try:
-    #             self._feedback.status = feedback_queue.get_nowait()
-    #             self._as.publish_feedback(self._feedback)
-    #         except queue.Empty:
-    #             pass
-    #
-    #         answer = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_ANSWER)
-    #         if answer is not None:
-    #             break
-    #
-    #         rate.sleep()
-    #     rk_logger.info(f"Send: {answer}")
-    #     self.send_result(answer)
-    # """
+# """
+# def execute_cb(self, goal):
+#     # Warning: Exception happening in this callback might not crash your program and hide.
+#     # When it is not executed completely, look for lines that throw.
+#
+#     # publish info to the console for the user
+#     rk_logger = logging.getLogger(robokudo.defs.PACKAGE_NAME)
+#     rk_logger.info(f"Received query: {goal}")
+#     self.new_query = goal
+#     self.query = goal
+#
+#     rate = self.create_rate(50)  # in hz
+#
+#     # Wait until the QueryAnnotator has called start_processing on the AS.
+#     rk_logger.info(f"Begin waiting for new_query")
+#     while self.new_query is not None:
+#         rate.sleep()
+#
+#     feedback_queue: queue.Queue = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_FEEDBACK)
+#
+#     rk_logger.info(f"Start watching")
+#     while True:
+#         # Check if preempt is ready to be completed
+#         preempted_acknowledged = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_PREEMPT_ACK)
+#         if preempted_acknowledged is True:
+#             self.reset_bookkeeping_vars()
+#             self._as.set_preempted()
+#             return
+#
+#         # Check for errors
+#         if robokudo.utils.error_handling.get_blackboard_exception() is not None:
+#             rk_logger.info(f"QI catched error")
+#             # Atleast one of the annotators failed - Abort and reset exception conditions
+#             self.reset_bookkeeping_vars()
+#
+#             exception_text = str(robokudo.utils.error_handling.get_blackboard_exception())
+#             robokudo.utils.error_handling.clear_blackboard_exception()
+#             self._as.set_aborted(text=exception_text)
+#             return
+#
+#         # Check for preempt request and put request info on the Tree
+#         # Atleast one of the Annotators/Behaviors have to acknowledge in order
+#         # finish the preemption
+#         if self._as.is_preempt_requested() and not self.preempt_message_printed:
+#             rk_logger.info(f"Query Interface received preempt request")
+#             self.preempt_message_printed = True
+#             py_trees.blackboard.Blackboard().set(BBIdentifier.QUERY_PREEMPT_REQUESTED, True)
+#             continue
+#
+#         # Check for feedback messages to be sent
+#         try:
+#             self._feedback.status = feedback_queue.get_nowait()
+#             self._as.publish_feedback(self._feedback)
+#         except queue.Empty:
+#             pass
+#
+#         answer = py_trees.blackboard.Blackboard().get(BBIdentifier.QUERY_ANSWER)
+#         if answer is not None:
+#             break
+#
+#         rate.sleep()
+#     rk_logger.info(f"Send: {answer}")
+#     self.send_result(answer)
+# """
 
 
 class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
     """
-    This class reads in the annotations done by the previous Annotators
-    and generates Object Designators from them.
-    These will be placed into the Blackboard so that a running Query Action Server can pick the information
-    up and send it as a query reply.
+    This class reads in the annotations done by the previous Annotators and generates
+    Object Designators from them.
+
+    These will be placed into the Blackboard so that a running Query Action Server can
+    pick the information up and send it as a query reply.
     """
 
     def __init__(self, name="GenerateQueryResult"):
@@ -322,24 +323,29 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                             region = True
 
             object_designator = robokudo_msgs.msg.ObjectDesignator()
-            belief_ids = [a for a in annotation.annotations if isinstance(a, BeliefEntry)]
+            belief_ids = [
+                a for a in annotation.annotations if isinstance(a, BeliefEntry)
+            ]
             if belief_ids:
                 object_designator.uid = str(belief_ids[0].id)
             if filter_by_region == region:
-
                 for oh_annotation in annotation.annotations:
                     # TODO Rewrite with a generic conversion module for each of the types
 
-                    if isinstance(oh_annotation, robokudo.types.annotation.Classification):
-                        if oh_annotation.source == 'CLIPAnnotator':
+                    if isinstance(
+                        oh_annotation, robokudo.types.annotation.Classification
+                    ):
+                        if oh_annotation.source == "CLIPAnnotator":
                             object_designator.attribute.append(oh_annotation.classname)
                         else:
                             object_designator.type = oh_annotation.classname
-                    if isinstance(oh_annotation, robokudo.types.annotation.SemanticColor):
+                    if isinstance(
+                        oh_annotation, robokudo.types.annotation.SemanticColor
+                    ):
                         object_designator.color.append(oh_annotation.color)
 
                     if isinstance(oh_annotation, robokudo.types.cv.BoundingBox3D):
-                        object_designator.size = f'x: {oh_annotation.x_length}, y: {oh_annotation.y_length}, z: {oh_annotation.z_length}'
+                        object_designator.size = f"x: {oh_annotation.x_length}, y: {oh_annotation.y_length}, z: {oh_annotation.z_length}"
                         size = ShapeSize()
                         vector = Vector3()
                         vector.x = oh_annotation.x_length
@@ -349,10 +355,14 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                         size.radius = 0
                         object_designator.shape_size.append(size)
 
-                    if isinstance(oh_annotation, robokudo.types.annotation.PoseAnnotation):
+                    if isinstance(
+                        oh_annotation, robokudo.types.annotation.PoseAnnotation
+                    ):
                         ps = geometry_msgs.msg.PoseStamped()
 
-                        pose_map = transform_pose_from_camera_to_world(self.get_cas(), oh_annotation)
+                        pose_map = transform_pose_from_camera_to_world(
+                            self.get_cas(), oh_annotation
+                        )
                         # TODO create PoseStamped and add it to the list
                         ps.pose.position.x = pose_map.translation[0]
                         ps.pose.position.y = pose_map.translation[1]
@@ -365,13 +375,14 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
 
                         # We assume that the pose annotation is in CAMERA coordinates
                         ps.header = camera_header(self.get_cas())
-                        ps.header.frame_id = 'map'
+                        ps.header.frame_id = "map"
                         object_designator.pose.append(ps)
 
                         object_designator.pose_source.append(oh_annotation.source)
 
-                    if isinstance(oh_annotation, robokudo.types.annotation.PositionAnnotation):
-
+                    if isinstance(
+                        oh_annotation, robokudo.types.annotation.PositionAnnotation
+                    ):
                         pos = PoseAnnotation()
                         pos.source = oh_annotation.source
                         pos.translation.insert(0, oh_annotation.translation[0])
@@ -383,7 +394,9 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                         pos.rotation.insert(2, 0)
                         pos.rotation.insert(3, 1)
 
-                        pose_map = transform_pose_from_camera_to_world(self.get_cas(), pos)
+                        pose_map = transform_pose_from_camera_to_world(
+                            self.get_cas(), pos
+                        )
 
                         # Must be a PoseStamped due to type specification in ros message
                         ps = geometry_msgs.msg.PoseStamped()
@@ -398,7 +411,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
 
                         # We assume that the pose annotation is in CAMERA coordinates
                         ps.header = camera_header(self.get_cas())
-                        ps.header.frame_id = 'map'
+                        ps.header.frame_id = "map"
                         object_designator.pose.append(ps)
 
                         object_designator.pose_source.append(oh_annotation.source)
@@ -407,16 +420,19 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
 
         result.res = query_result
         QueryHandler.send_answer(result)
-        self.feedback_message = f"Send result for {object_hypotheses_count} object hypotheses"
+        self.feedback_message = (
+            f"Send result for {object_hypotheses_count} object hypotheses"
+        )
         return py_trees.common.Status.SUCCESS
 
 
 class GenerateCharacteristicResult(robokudo.annotators.core.BaseAnnotator):
     """
-    This class reads in the annotations done by the previous Annotators
-    and generates Object Designators from them.
-    These will be placed into the Blackboard so that a running Query Action Server can pick the information
-    up and send it as a query reply.
+    This class reads in the annotations done by the previous Annotators and generates
+    Object Designators from them.
+
+    These will be placed into the Blackboard so that a running Query Action Server can
+    pick the information up and send it as a query reply.
     """
 
     def __init__(self, name="GenerateCharacteristicResult"):
@@ -424,21 +440,24 @@ class GenerateCharacteristicResult(robokudo.annotators.core.BaseAnnotator):
 
     def update(self):
 
-
-        hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
+        hypotheses = self.get_cas().filter_annotations_by_type(
+            robokudo.types.scene.HumanHypothesis
+        )
         query_result = []
         result = Query.Result()
         object_designator = robokudo_msgs.msg.ObjectDesignator()
 
         if hypotheses:
-            belief_ids = [a for a in hypotheses[0].annotations if isinstance(a, BeliefEntry)]
+            belief_ids = [
+                a for a in hypotheses[0].annotations if isinstance(a, BeliefEntry)
+            ]
             if belief_ids:
                 object_designator.uid = str(belief_ids[0].id)
             for annotation in hypotheses[0].annotations:
                 if not isinstance(annotation, robokudo.types.annotation.Classification):
                     continue
 
-                if annotation.source == 'CLIPAnnotator':
+                if annotation.source == "CLIPAnnotator":
                     object_designator.attribute.append(annotation.classname)
                 else:
                     object_designator.type = annotation.classname

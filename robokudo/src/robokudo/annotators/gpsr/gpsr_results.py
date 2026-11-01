@@ -3,11 +3,17 @@ from py_trees.common import Status
 from std_msgs.msg import Header
 from robokudo.annotators.core import BaseAnnotator
 from robokudo.cas import CAS, CASViews
-from robokudo.types.annotation import Classification, LocationAnnotation, PositionAnnotation
+from robokudo.types.annotation import (
+    Classification,
+    LocationAnnotation,
+    PositionAnnotation,
+)
 from robokudo.types.human import ActivityAnnotation
 from robokudo.types.scene import HumanHypothesis, ObjectHypothesis
 from robokudo.utils.query import QueryHandler
-from robokudo.utils.type_conversion import get_geometry_msgs_pose_stamped_from_position_annotation
+from robokudo.utils.type_conversion import (
+    get_geometry_msgs_pose_stamped_from_position_annotation,
+)
 from robokudo_msgs.action import Query
 from robokudo_msgs.msg import ObjectDesignator
 from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
@@ -19,7 +25,8 @@ from robokudo.annotators.gpsr.belief_state import BeliefEntry
 
 def camera_header(cas: CAS) -> Header:
     """
-    The header of the current camera image: its acquisition time and the frame of the camera.
+    The header of the current camera image: its acquisition time and the frame of the
+    camera.
     """
     observation = cas.require_camera_observation()
     return Header(
@@ -47,18 +54,30 @@ class GenerateHumanPostureResults(BaseAnnotator):
         query_result = []
         result = Query.Result()
 
-        keypoint_rule_sources = {HumanSittingAnnotator.__name__, HumanStandingAnnotator.__name__, HumanLyingAnnotator.__name__}
+        keypoint_rule_sources = {
+            HumanSittingAnnotator.__name__,
+            HumanStandingAnnotator.__name__,
+            HumanLyingAnnotator.__name__,
+        }
 
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
             object_designator.type = query.obj.type
-            activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
-            positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
+            activities = self.get_cas().filter_by_type(
+                ActivityAnnotation, hypothesis.annotations
+            )
+            positions = self.get_cas().filter_by_type(
+                PositionAnnotation, hypothesis.annotations
+            )
 
             # a person's posture is known when exactly one keypoint rule fires
-            keypoint_postures = {a.type for a in activities if a.source in keypoint_rule_sources}
+            keypoint_postures = {
+                a.type for a in activities if a.source in keypoint_rule_sources
+            }
             if len(keypoint_postures) != 1:
-                self.rk_logger.info(f"Posture of HH {hypothesis.id}: undecided, rules fired: {sorted(keypoint_postures)}")
+                self.rk_logger.info(
+                    f"Posture of HH {hypothesis.id}: undecided, rules fired: {sorted(keypoint_postures)}"
+                )
                 continue
             posture = keypoint_postures.pop()
             # the rules say lying, the queries say laying
@@ -68,12 +87,18 @@ class GenerateHumanPostureResults(BaseAnnotator):
                 object_designator.attribute.append(posture)
 
             if object_designator.attribute:
-                belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
+                belief_ids = self.get_cas().filter_by_type(
+                    BeliefEntry, hypothesis.annotations
+                )
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
                     header = camera_header(self.get_cas())
-                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                    pose_stamped = (
+                        get_geometry_msgs_pose_stamped_from_position_annotation(
+                            position, header
+                        )
+                    )
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
 
@@ -93,7 +118,6 @@ class GenerateObjectDetectionResult(BaseAnnotator):
     def __init__(self, name="ObjectDetectionResult", *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
     def update(self):
         object_hypotheses = self.get_cas().filter_annotations_by_type(ObjectHypothesis)
         query_result = []
@@ -101,21 +125,31 @@ class GenerateObjectDetectionResult(BaseAnnotator):
 
         for hypothesis in object_hypotheses:
             object_designator = ObjectDesignator()
-            object_designator.type = 'object'
-            classifications = self.get_cas().filter_by_type(Classification, hypothesis.annotations)
-            positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
+            object_designator.type = "object"
+            classifications = self.get_cas().filter_by_type(
+                Classification, hypothesis.annotations
+            )
+            positions = self.get_cas().filter_by_type(
+                PositionAnnotation, hypothesis.annotations
+            )
 
             for classification in classifications:
                 if classification.source == "YoloAnnotator":
                     object_designator.description.append(classification.classname)
 
             if object_designator.description:
-                belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
+                belief_ids = self.get_cas().filter_by_type(
+                    BeliefEntry, hypothesis.annotations
+                )
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
                     header = camera_header(self.get_cas())
-                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                    pose_stamped = (
+                        get_geometry_msgs_pose_stamped_from_position_annotation(
+                            position, header
+                        )
+                    )
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
 
@@ -131,6 +165,7 @@ class GenerateObjectDetectionResult(BaseAnnotator):
 class GenerateWavingRaisingResult(BaseAnnotator):
     """
     Annotator to generate waving and arm raising results.
+
     Arm raising can be either left or right.
     """
 
@@ -147,8 +182,12 @@ class GenerateWavingRaisingResult(BaseAnnotator):
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
             object_designator.type = query.obj.type
-            positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
-            activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
+            positions = self.get_cas().filter_by_type(
+                PositionAnnotation, hypothesis.annotations
+            )
+            activities = self.get_cas().filter_by_type(
+                ActivityAnnotation, hypothesis.annotations
+            )
 
             for activity in activities:
                 if activity.source == "HumanWavingAnnotator":
@@ -156,12 +195,18 @@ class GenerateWavingRaisingResult(BaseAnnotator):
                         object_designator.description.append(activity.type)
 
             if object_designator.description:
-                belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
+                belief_ids = self.get_cas().filter_by_type(
+                    BeliefEntry, hypothesis.annotations
+                )
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
                     header = camera_header(self.get_cas())
-                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                    pose_stamped = (
+                        get_geometry_msgs_pose_stamped_from_position_annotation(
+                            position, header
+                        )
+                    )
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
 
@@ -192,21 +237,33 @@ class GeneratePointingResult(BaseAnnotator):
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
             object_designator.type = query.obj.type
-            activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
-            positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
+            activities = self.get_cas().filter_by_type(
+                ActivityAnnotation, hypothesis.annotations
+            )
+            positions = self.get_cas().filter_by_type(
+                PositionAnnotation, hypothesis.annotations
+            )
 
             for activity in activities:
                 if activity.source == "HumanPointingAnnotator":
-                    object_designator.description.append(f"Behavior suggests {activity.type}.")
+                    object_designator.description.append(
+                        f"Behavior suggests {activity.type}."
+                    )
 
             if object_designator.description:
                 if activity.type == query.obj.attribute[0]:
-                    belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
+                    belief_ids = self.get_cas().filter_by_type(
+                        BeliefEntry, hypothesis.annotations
+                    )
                     if belief_ids:
                         object_designator.uid = str(belief_ids[0].id)
                     for position in positions:
                         header = camera_header(self.get_cas())
-                        pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                        pose_stamped = (
+                            get_geometry_msgs_pose_stamped_from_position_annotation(
+                                position, header
+                            )
+                        )
                         object_designator.pose.append(pose_stamped)
                         object_designator.pose_source.append(position.source)
                 else:
@@ -221,10 +278,10 @@ class GeneratePointingResult(BaseAnnotator):
         return Status.SUCCESS
 
 
-
 class GenerateHumanActivityResult(BaseAnnotator):
     """
     Annotator to generate human activity results (posture + gestures).
+
     Reads ActivityAnnotations written by HumanActivityAnnotator.
     """
 
@@ -242,14 +299,23 @@ class GenerateHumanActivityResult(BaseAnnotator):
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
             object_designator.type = query.obj.type
-            positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
-            activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
+            positions = self.get_cas().filter_by_type(
+                PositionAnnotation, hypothesis.annotations
+            )
+            activities = self.get_cas().filter_by_type(
+                ActivityAnnotation, hypothesis.annotations
+            )
 
-            pointing_refinements = [a.type for a in activities if a.source == "HumanPointingAnnotator"]
+            pointing_refinements = [
+                a.type for a in activities if a.source == "HumanPointingAnnotator"
+            ]
 
             for activity in activities:
                 if activity.source == "HumanActivityAnnotator":
-                    if activity.type in HumanActivityAnnotator.Descriptor.Parameters().posture_labels:
+                    if (
+                        activity.type
+                        in HumanActivityAnnotator.Descriptor.Parameters().posture_labels
+                    ):
                         object_designator.attribute.append(activity.type)
                     elif activity.type == "Pointing" and pointing_refinements:
                         # skeleton already has a concrete direction so we skip the ambiguous CLIP pointing label
@@ -267,14 +333,19 @@ class GenerateHumanActivityResult(BaseAnnotator):
                 elif activity.source == "HumanWavingAnnotator":
                     object_designator.description.append(activity.type)
 
-
             if object_designator.attribute or object_designator.description:
-                belief_ids = self.get_cas().filter_by_type(BeliefEntry, hypothesis.annotations)
+                belief_ids = self.get_cas().filter_by_type(
+                    BeliefEntry, hypothesis.annotations
+                )
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
                     header = camera_header(self.get_cas())
-                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                    pose_stamped = (
+                        get_geometry_msgs_pose_stamped_from_position_annotation(
+                            position, header
+                        )
+                    )
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
 
@@ -289,6 +360,7 @@ class GenerateHumanActivityResult(BaseAnnotator):
 class GenerateGSamResult(BaseAnnotator):
     """
     Annotator to generate waving and arm raising results.
+
     Arm raising can be either left or right.
     """
 
@@ -299,6 +371,7 @@ class GenerateGSamResult(BaseAnnotator):
     def containment_ratio(self, inner, outer):
         """
         Calculate the containment ratio of two hypotheses.
+
         :param inner: The inner hypothesis (the one that is contained).
         :param outer: The outer hypothesis (the one that contains).
         """
@@ -320,17 +393,18 @@ class GenerateGSamResult(BaseAnnotator):
         interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
         inner_area = (inner_x_max - inner_x_min) * (inner_y_max - inner_y_min)
 
-        self.rk_logger.info(f"The outer hypothesis contains the inner hypothesis to {min(interArea / inner_area, 100)} of its area")
+        self.rk_logger.info(
+            f"The outer hypothesis contains the inner hypothesis to {min(interArea / inner_area, 100)} of its area"
+        )
         return interArea / inner_area
-
 
     def intersection_over_union(self, gsam, human):
         """
         Calculate the intersection over union of two hypotheses.
+
         :param gsam: The first hypothesis (the one that is contained).
         :param human: The second hypothesis (the one that contains).
         """
-
         box1_x_min = gsam.roi.roi.pos.x
         box1_x_max = gsam.roi.roi.pos.x + gsam.roi.roi.width
         box1_y_min = gsam.roi.roi.pos.y
@@ -352,7 +426,9 @@ class GenerateGSamResult(BaseAnnotator):
 
         iou = interArea / float(box1_area + box2_area - interArea)
 
-        self.rk_logger.info(f"Intersection over union between {gsam} and {human}: {iou}")
+        self.rk_logger.info(
+            f"Intersection over union between {gsam} and {human}: {iou}"
+        )
         return iou
 
     def update(self):
@@ -360,14 +436,22 @@ class GenerateGSamResult(BaseAnnotator):
 
         # HumanPipeline
         if query.obj.type == "human" or query.obj.type == "humans":
-            human_hypotheses = self.get_cas().filter_annotations_by_type(HumanHypothesis)
-            object_hypotheses = self.get_cas().filter_annotations_by_type(ObjectHypothesis)
+            human_hypotheses = self.get_cas().filter_annotations_by_type(
+                HumanHypothesis
+            )
+            object_hypotheses = self.get_cas().filter_annotations_by_type(
+                ObjectHypothesis
+            )
 
             if self.with_region_filter and query.obj.location:
                 human_hypotheses = [
-                    h for h in human_hypotheses
-                    if any(isinstance(a, LocationAnnotation) and a.name == query.obj.location
-                           for a in h.annotations)
+                    h
+                    for h in human_hypotheses
+                    if any(
+                        isinstance(a, LocationAnnotation)
+                        and a.name == query.obj.location
+                        for a in h.annotations
+                    )
                 ]
 
             query_result = []
@@ -377,45 +461,82 @@ class GenerateGSamResult(BaseAnnotator):
                 for object_hypothesis in object_hypotheses:
                     # We dont want to compare human with human or object with object
                     if not isinstance(object_hypothesis, HumanHypothesis):
-                        gsam_hypothesis = self.get_cas().filter_by_type(Classification, object_hypothesis.annotations)[0]
+                        gsam_hypothesis = self.get_cas().filter_by_type(
+                            Classification, object_hypothesis.annotations
+                        )[0]
                         if gsam_hypothesis.source == "GroundedSAM":
-                            containment_ratio = self.containment_ratio(object_hypothesis, human_hypothesis)
+                            containment_ratio = self.containment_ratio(
+                                object_hypothesis, human_hypothesis
+                            )
                             if containment_ratio > 0.8:
                                 object_designator = ObjectDesignator()
                                 object_designator.type = query.obj.type
-                                object_designator.description.append(gsam_hypothesis.classname)
-                                belief_ids = self.get_cas().filter_by_type(BeliefEntry, human_hypothesis.annotations)
+                                object_designator.description.append(
+                                    gsam_hypothesis.classname
+                                )
+                                belief_ids = self.get_cas().filter_by_type(
+                                    BeliefEntry, human_hypothesis.annotations
+                                )
                                 if belief_ids:
                                     object_designator.uid = str(belief_ids[0].id)
 
-                                positions = self.get_cas().filter_by_type(PositionAnnotation, human_hypothesis.annotations)
+                                positions = self.get_cas().filter_by_type(
+                                    PositionAnnotation, human_hypothesis.annotations
+                                )
                                 for position in positions:
                                     header = camera_header(self.get_cas())
-                                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                                    pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(
+                                        position, header
+                                    )
                                     object_designator.pose.append(pose_stamped)
-                                    object_designator.pose_source.append(position.source)
+                                    object_designator.pose_source.append(
+                                        position.source
+                                    )
 
                                 query_result.append(object_designator)
 
         # ObjectPipeline
         elif query.obj.type == "object":
-            object_hypotheses = self.get_cas().filter_annotations_by_type(ObjectHypothesis)
+            object_hypotheses = self.get_cas().filter_annotations_by_type(
+                ObjectHypothesis
+            )
             query_result = []
             result = Query.Result()
 
             for object_hypothesis in object_hypotheses:
-                assert len(self.get_cas().filter_by_type(Classification, object_hypothesis.annotations)) > 0, (
-                        len(self.get_cas().filter_by_type(Classification, object_hypothesis.annotations)) < 2)
-                gsam_hypothesis = self.get_cas().filter_by_type(Classification, object_hypothesis.annotations)[0]
+                assert (
+                    len(
+                        self.get_cas().filter_by_type(
+                            Classification, object_hypothesis.annotations
+                        )
+                    )
+                    > 0
+                ), (
+                    len(
+                        self.get_cas().filter_by_type(
+                            Classification, object_hypothesis.annotations
+                        )
+                    )
+                    < 2
+                )
+                gsam_hypothesis = self.get_cas().filter_by_type(
+                    Classification, object_hypothesis.annotations
+                )[0]
                 if gsam_hypothesis.source == "GroundedSAM":
                     object_designator = ObjectDesignator()
                     object_designator.type = query.obj.type
                     object_designator.description.append(gsam_hypothesis.classname)
 
-                    positions = self.get_cas().filter_by_type(PositionAnnotation, object_hypothesis.annotations)
+                    positions = self.get_cas().filter_by_type(
+                        PositionAnnotation, object_hypothesis.annotations
+                    )
                     for position in positions:
                         header = camera_header(self.get_cas())
-                        pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
+                        pose_stamped = (
+                            get_geometry_msgs_pose_stamped_from_position_annotation(
+                                position, header
+                            )
+                        )
                         object_designator.pose.append(pose_stamped)
                         object_designator.pose_source.append(position.source)
 
@@ -428,4 +549,3 @@ class GenerateGSamResult(BaseAnnotator):
 
         self.feedback_message = "Query result generated."
         return Status.SUCCESS
-

@@ -18,15 +18,22 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
         # the pose model lies next to our weights, outside CRAM
-        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
-            ros_pkg_name='robokudo_suturo', relative_path='weights')
+        human_descriptor.parameters.models_directory = (
+            FileLoader.get_path_to_file_in_ros_package(
+                ros_pkg_name="robokudo_suturo", relative_path="weights"
+            )
+        )
 
-        seq = py_trees.composites.Sequence("subtree_waving_raising_pipeline", memory=True)
-        seq.add_children([
-            HumanAndPoseAnnotator(descriptor=human_descriptor),
-            ClusterPositionAnnotator(),
-            HumanWavingAnnotator(),
-            BeliefStateAnnotator(),
-            GenerateWavingRaisingResult(),
-        ])
+        seq = py_trees.composites.Sequence(
+            "subtree_waving_raising_pipeline", memory=True
+        )
+        seq.add_children(
+            [
+                HumanAndPoseAnnotator(descriptor=human_descriptor),
+                ClusterPositionAnnotator(),
+                HumanWavingAnnotator(),
+                BeliefStateAnnotator(),
+                GenerateWavingRaisingResult(),
+            ]
+        )
         return seq

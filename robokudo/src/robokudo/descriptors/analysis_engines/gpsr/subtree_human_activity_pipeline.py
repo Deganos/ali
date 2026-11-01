@@ -11,7 +11,9 @@ from robokudo.annotators.gpsr.gpsr_results import GenerateHumanActivityResult
 from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
 from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 from robokudo.annotators.gpsr.check_for_human_hypothesis import CheckForHumanHypothesis
-from robokudo.annotators.gpsr.filter_human_by_activity_annotator import FilterHumanByActivityAnnotator
+from robokudo.annotators.gpsr.filter_human_by_activity_annotator import (
+    FilterHumanByActivityAnnotator,
+)
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):
@@ -23,8 +25,11 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         human_descriptor = HumanAndPoseAnnotator.Descriptor()
         human_descriptor.parameters.global_with_depth = True
         # the pose model lies next to our weights, outside CRAM
-        human_descriptor.parameters.models_directory = FileLoader.get_path_to_file_in_ros_package(
-            ros_pkg_name='robokudo_suturo', relative_path='weights')
+        human_descriptor.parameters.models_directory = (
+            FileLoader.get_path_to_file_in_ros_package(
+                ros_pkg_name="robokudo_suturo", relative_path="weights"
+            )
+        )
         human_descriptor.parameters.generate_clouds_for_keypoints = True
 
         waving_descriptor = HumanWavingAnnotator.Descriptor()
@@ -35,16 +40,20 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         pointing_descriptor.parameters.known = True
         pointing_descriptor.parameters.min_arm_extension = 0.25
 
-        seq = py_trees.composites.Sequence("subtree_human_activity_pipeline", memory=True)
-        seq.add_children([
-            HumanAndPoseAnnotator(descriptor=human_descriptor),
-            CheckForHumanHypothesis(),
-            HumanActivityAnnotator(),
-            ClusterPositionAnnotator(),
-            HumanWavingAnnotator(descriptor=waving_descriptor),
-            HumanPointingAnnotator(descriptor=pointing_descriptor),
-            BeliefStateAnnotator(),
-        ])
+        seq = py_trees.composites.Sequence(
+            "subtree_human_activity_pipeline", memory=True
+        )
+        seq.add_children(
+            [
+                HumanAndPoseAnnotator(descriptor=human_descriptor),
+                CheckForHumanHypothesis(),
+                HumanActivityAnnotator(),
+                ClusterPositionAnnotator(),
+                HumanWavingAnnotator(descriptor=waving_descriptor),
+                HumanPointingAnnotator(descriptor=pointing_descriptor),
+                BeliefStateAnnotator(),
+            ]
+        )
         if self.with_filter:
             seq.add_child(FilterHumanByActivityAnnotator())
         seq.add_child(GenerateHumanActivityResult())
