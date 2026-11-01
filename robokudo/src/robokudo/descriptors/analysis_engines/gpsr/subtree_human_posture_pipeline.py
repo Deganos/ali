@@ -4,7 +4,6 @@ from robokudo.annotators.cluster_position import ClusterPositionAnnotator
 from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
 from robokudo.annotators.gpsr.gpsr_results import GenerateHumanPostureResults
 from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
-from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
 from robokudo.annotators.gpsr.lying import HumanLyingAnnotator
 from robokudo.annotators.gpsr.sitting import HumanSittingAnnotator
 from robokudo.annotators.gpsr.standing import HumanStandingAnnotator
@@ -22,12 +21,10 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         seq = py_trees.composites.Sequence("subtree_human_position_pipeline", memory=True)
         seq.add_children([
             HumanAndPoseAnnotator(descriptor=human_descriptor),
-            # posture from the body keypoints; where no single rule fires, the CLIP posture of the
-            # HumanActivityAnnotator decides (GenerateHumanPostureResults)
+            # posture from the body keypoints only; CLIP and keypoints together are the hybrid activity route
             HumanSittingAnnotator(),
             HumanStandingAnnotator(),
             HumanLyingAnnotator(),
-            HumanActivityAnnotator(),
             ClusterPositionAnnotator(),
             BeliefStateAnnotator(),
             GenerateHumanPostureResults(),

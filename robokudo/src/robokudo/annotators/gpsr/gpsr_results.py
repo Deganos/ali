@@ -48,7 +48,6 @@ class GenerateHumanPostureResults(BaseAnnotator):
         result = Query.Result()
 
         keypoint_rule_sources = {HumanSittingAnnotator.__name__, HumanStandingAnnotator.__name__, HumanLyingAnnotator.__name__}
-        clip_posture_labels = HumanActivityAnnotator.Descriptor.Parameters().posture_labels
 
         for hypothesis in human_hypotheses:
             object_designator = ObjectDesignator()
@@ -56,19 +55,15 @@ class GenerateHumanPostureResults(BaseAnnotator):
             activities = self.get_cas().filter_by_type(ActivityAnnotation, hypothesis.annotations)
             positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
 
-            # the keypoint rules decide when exactly one of them fires, otherwise the CLIP posture does
+            # a person's posture is known when exactly one keypoint rule fires
             keypoint_postures = {a.type for a in activities if a.source in keypoint_rule_sources}
-            clip_postures = [a.type.lower() for a in activities
-                             if a.source == HumanActivityAnnotator.__name__ and a.type in clip_posture_labels]
-            if len(keypoint_postures) == 1:
-                posture, decided_by = keypoint_postures.pop(), "keypoints"
-            elif clip_postures:
-                posture, decided_by = clip_postures[0], "CLIP"
-            else:
+            if len(keypoint_postures) != 1:
+                self.rk_logger.info(f"Posture of HH {hypothesis.id}: undecided, rules fired: {sorted(keypoint_postures)}")
                 continue
-            # the rules and CLIP say lying, the queries say laying
+            posture = keypoint_postures.pop()
+            # the rules say lying, the queries say laying
             posture = "laying" if posture == "lying" else posture
-            self.rk_logger.info(f"Posture of HH {hypothesis.id}: {posture} (decided by {decided_by})")
+            self.rk_logger.info(f"Posture of HH {hypothesis.id}: {posture}")
             if posture == query.obj.attribute[0]:
                 object_designator.attribute.append(posture)
 
