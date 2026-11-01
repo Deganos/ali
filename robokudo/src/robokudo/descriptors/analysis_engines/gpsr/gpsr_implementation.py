@@ -1,6 +1,8 @@
 from py_trees.composites import Sequence
 import robokudo.analysis_engine
+from robokudo.annotators.collection_reader import CollectionReaderAnnotator
 from robokudo.annotators.image_preprocessor import ImagePreprocessorAnnotator
+from robokudo.descriptors.factories.cr_descriptor_factory import CollectionReaderDescriptorFactory
 from robokudo.annotators.query import QueryAnnotator
 import robokudo.annotators
 from robokudo.idioms import pipeline_init
@@ -50,7 +52,8 @@ class AnalysisEngine(robokudo.analysis_engine.AnalysisEngineInterface):
         return "gpsr"
 
     def configure_collection_reader(self):
-        raise "Trying to instantiate gpsr_implementation directly. You must overwrite this method."
+        self.cr = CollectionReaderAnnotator(
+            descriptor=CollectionReaderDescriptorFactory.create_descriptor("hsr_ros2"))
 
     @catch_and_raise_to_blackboard
     def implementation(self):
