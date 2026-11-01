@@ -122,19 +122,11 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         right_above_eye_level_offset_pixel = (right_eye_shoulder_distance_pixel
                                               * self.descriptor.parameters.waving_decision_factor)
 
-        # Nur als RAISING werten, wenn der Arm mehr nach oben als nach außen geht
-        left_vertical_rise   = left_shoulder.y - left_wrist.y          # >0 = Handgelenk über Schulter
-        left_horizontal_ext  = abs(left_wrist.x - left_shoulder.x)
-        right_vertical_rise  = right_shoulder.y - right_wrist.y
-        right_horizontal_ext = abs(right_wrist.x - right_shoulder.x)
-
         if left_wrist.y < (left_shoulder.y - left_above_eye_level_offset_pixel) and \
-                left_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold and \
-                left_vertical_rise > left_horizontal_ext:
+                left_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
             return "right"
         if right_wrist.y < (right_shoulder.y - right_above_eye_level_offset_pixel) and \
-                right_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold and \
-                right_vertical_rise > right_horizontal_ext:
+                right_wrist.confidence > self.descriptor.parameters.keypoint_confidence_threshold:
             return "left"
         return None
 
