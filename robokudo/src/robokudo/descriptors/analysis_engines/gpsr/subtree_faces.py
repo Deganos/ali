@@ -4,14 +4,14 @@ import py_trees
 import robokudo.analysis_engine
 import robokudo
 from robokudo.annotators.cluster_position import ClusterPositionAnnotator
-from robokudo_faces.annotators.face_classification import FaceClassification
+from robokudo.annotators.gpsr.face_classification import FaceClassification
 import robokudo.utils.file_loader
-from robokudo_faces.annotators.face_detector import FaceDetector
-from robokudo_robocup_receptionist.annotators.store_unknown_faces import StoreFaces
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
-from robokudo_suturo.annotators.filter_objects_by_area import FilterObjectsByArea
-from robokudo_suturo.annotators.generate_all_annotations import GenerateAllQueryResult
-from robokudo_suturo.annotators.parametrize_human_classifier import ParametrizeHumanClassifyAnnotator
+from robokudo.annotators.gpsr.face_detector import FaceDetector
+from robokudo.annotators.gpsr.store_unknown_faces import StoreFaces
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.filter_objects_by_area import FilterObjectsByArea
+from robokudo.annotators.gpsr.generate_all_annotations import GenerateAllQueryResult
+from robokudo.annotators.gpsr.parametrize_human_classifier import ParametrizeHumanClassifyAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

@@ -1,9 +1,9 @@
 import py_trees
 import robokudo.analysis_engine
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
-from robokudo_suturo.annotators.filter_objects_by_region import FilterObjectsByRegion
-from robokudo_suturo.annotators.generate_all_annotations import GenerateAllQueryResult
-from robokudo_suturo.descriptors.analysis_engines.subtree_object_detection import Subtree as ObjectDetectionSubtree
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.filter_objects_by_region import FilterObjectsByRegion
+from robokudo.annotators.gpsr.generate_all_annotations import GenerateAllQueryResult
+from robokudo.descriptors.analysis_engines.gpsr.subtree_object_detection import Subtree as ObjectDetectionSubtree
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

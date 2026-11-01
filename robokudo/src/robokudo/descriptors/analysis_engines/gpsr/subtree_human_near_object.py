@@ -4,12 +4,12 @@ import robokudo.annotators.core
 from robokudo.annotators.cluster_position import ClusterPositionAnnotator
 from robokudo.annotators.query import GenerateQueryResult
 from robokudo.cas import CASViews
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
-from robokudo_yolo.annotators.YoloAnnotator import YoloAnnotator
+from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.yolo_annotator import YoloAnnotator
 
-from robokudo_robocup_gpsr.annotators.filter_humans_by_object_annotator import \
+from robokudo.annotators.gpsr.filter_humans_by_object_annotator import \
     FilterHumansByObjectAnnotator
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 
 # TODO: find a way, to make it cleaner/ better and mapping every item, that could come (maybe like semmanticannotations)
 FURNITURE = {

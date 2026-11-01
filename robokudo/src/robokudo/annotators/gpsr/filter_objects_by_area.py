@@ -1,6 +1,6 @@
 import py_trees
 from robokudo.types.annotation import PoseAnnotation, PositionAnnotation
-from robokudo.utils.annotator_helper import transform_pose_from_cam_to_world
+from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world
 
 import robokudo.types.scene
 import robokudo.annotators.core
@@ -48,7 +48,7 @@ class FilterObjectsByArea(robokudo.annotators.core.BaseAnnotator):
 
                 # If submitted ares coordinates are in map coordinates, transform PoseAnnotation to map
                 if self.descriptor.parameters.frame is 'map':
-                    pose_map = transform_pose_from_cam_to_world(self.get_cas(), pose_map)
+                    pose_map = transform_pose_from_camera_to_world(self.get_cas(), pose_map)
 
                 self.__transform(pose_map)
 

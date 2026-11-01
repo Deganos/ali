@@ -6,7 +6,7 @@ import robokudo.annotators.core
 import robokudo.types.annotation
 from robokudo.types.annotation import PoseAnnotation
 from robokudo.types.scene import HumanHypothesis, ObjectHypothesis
-from robokudo.utils.annotator_helper import transform_pose_from_cam_to_world
+from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world
 
 
 class FilterHumansByObjectAnnotator(robokudo.annotators.core.BaseAnnotator):
@@ -61,7 +61,7 @@ class FilterHumansByObjectAnnotator(robokudo.annotators.core.BaseAnnotator):
             pose = PoseAnnotation()
             pose.translation = list(point)
             pose.rotation = [0.0, 0.0, 0.0, 1.0]
-            return np.array(transform_pose_from_cam_to_world(cas, pose).translation)
+            return np.array(transform_pose_from_camera_to_world(cas, pose).translation)
 
         origin = to_world([0.0, 0.0, 0.0])
         right = to_world([1.0, 0.0, 0.0]) - origin    # camera image-right axis
@@ -113,7 +113,7 @@ class FilterHumansByObjectAnnotator(robokudo.annotators.core.BaseAnnotator):
             pose.rotation = [0.0, 0.0, 0.0, 1.0]
             furniture_cam_positions.append(pose.translation)
             furniture_clouds.append(self._cluster_cloud(obj))
-            furniture_world_positions.append(transform_pose_from_cam_to_world(cas, pose).translation)
+            furniture_world_positions.append(transform_pose_from_camera_to_world(cas, pose).translation)
 
         if not furniture_world_positions:
             self.rk_logger.info(f"No '{target_type}' detected, removing all {len(humans)} humans")
@@ -131,7 +131,7 @@ class FilterHumansByObjectAnnotator(robokudo.annotators.core.BaseAnnotator):
             pose = PoseAnnotation()
             pose.translation = position[0].translation
             pose.rotation = [0.0, 0.0, 0.0, 1.0]
-            world_pos = transform_pose_from_cam_to_world(cas, pose).translation
+            world_pos = transform_pose_from_camera_to_world(cas, pose).translation
 
             near_furniture = False
             for furniture_pos in furniture_world_positions:

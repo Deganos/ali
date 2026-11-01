@@ -20,11 +20,11 @@ from robokudo.cas import CASViews
 import robokudo.defs
 import robokudo.utils.error_handling
 from robokudo.types.annotation import PoseAnnotation, PositionAnnotation
-from robokudo.utils.annotator_helper import transform_pose_from_cam_to_world
+from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world
 from robokudo_msgs.msg import ShapeSize
 from geometry_msgs.msg import Vector3
 from robokudo_msgs.action import Query
-from robokudo_suturo.annotators.belief_state import BeliefEntry
+from robokudo.annotators.gpsr.belief_state import BeliefEntry
 
 
 # class QueryAnnotator(robokudo.annotators.core.BaseAnnotator):
@@ -352,7 +352,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                     if isinstance(oh_annotation, robokudo.types.annotation.PoseAnnotation):
                         ps = geometry_msgs.msg.PoseStamped()
 
-                        pose_map = transform_pose_from_cam_to_world(self.get_cas(), oh_annotation)
+                        pose_map = transform_pose_from_camera_to_world(self.get_cas(), oh_annotation)
                         # TODO create PoseStamped and add it to the list
                         ps.pose.position.x = pose_map.translation[0]
                         ps.pose.position.y = pose_map.translation[1]
@@ -383,7 +383,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                         pos.rotation.insert(2, 0)
                         pos.rotation.insert(3, 1)
 
-                        pose_map = transform_pose_from_cam_to_world(self.get_cas(), pos)
+                        pose_map = transform_pose_from_camera_to_world(self.get_cas(), pos)
 
                         # Must be a PoseStamped due to type specification in ros message
                         ps = geometry_msgs.msg.PoseStamped()

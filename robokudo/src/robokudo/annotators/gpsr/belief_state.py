@@ -11,7 +11,7 @@ import robokudo.types.annotation
 import robokudo.types.human
 import robokudo.types.scene
 import robokudo.types.cv
-from robokudo.utils.annotator_helper import transform_pose_from_cam_to_world
+from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world
 
 
 class EntityStatus(str, Enum):
@@ -296,7 +296,7 @@ class BeliefStateAnnotator(robokudo.annotators.core.BaseAnnotator):
 
             if isinstance(ann, robokudo.types.annotation.PoseAnnotation):
                 try:
-                    world_pose = transform_pose_from_cam_to_world(cas, ann)
+                    world_pose = transform_pose_from_camera_to_world(cas, ann)
                     position = list(world_pose.translation)
                     orientation = list(world_pose.rotation)
                 except Exception:
@@ -307,7 +307,7 @@ class BeliefStateAnnotator(robokudo.annotators.core.BaseAnnotator):
                 pose_like.translation = list(ann.translation)
                 pose_like.rotation = [0.0, 0.0, 0.0, 1.0]
                 try:
-                    world_pose = transform_pose_from_cam_to_world(cas, pose_like)
+                    world_pose = transform_pose_from_camera_to_world(cas, pose_like)
                     position = list(world_pose.translation)
                 except Exception:
                     position = list(ann.translation)

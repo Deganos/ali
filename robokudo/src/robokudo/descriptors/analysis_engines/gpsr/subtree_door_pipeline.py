@@ -1,10 +1,10 @@
 import py_trees
 import robokudo.analysis_engine
 from robokudo.annotators.query import GenerateQueryResult
-from robokudo_yolo.annotators.YoloAnnotator import YoloAnnotator
+from robokudo.annotators.yolo_annotator import YoloAnnotator
 
-from robokudo_robocup_gpsr.annotators.door_handle_pose_annotator import DoorHandlePoseAnnotator
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.door_handle_pose_annotator import DoorHandlePoseAnnotator
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

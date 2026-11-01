@@ -21,7 +21,7 @@ import robokudo.utils.error_handling
 import robokudo.utils.math_helper
 import robokudo.utils.o3d_helper
 import robokudo.utils.transform
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
 
 
 # Structure to hold keypoint data and confidence to ease handling of multiple keypoints
@@ -116,7 +116,7 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         self.feedback_message = f'Processing took {(end_timer - start_timer):.4f}s'
         return py_trees.common.Status.SUCCESS
 
-    def keypoints_suggest_arm_raising(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation.KP_TYPE_2D):
+    def keypoints_suggest_arm_raising(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
         left_wrist = KeypointData(
             keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_WRIST])
         right_wrist = KeypointData(
@@ -154,7 +154,7 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
             return "left"
         return None
 
-    def keypoints_suggest_waving(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation.KP_TYPE_2D):
+    def keypoints_suggest_waving(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
         left_wrist = KeypointData(
             keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_WRIST])
         right_wrist = KeypointData(

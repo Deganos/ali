@@ -4,10 +4,9 @@ import robokudo.analysis_engine
 import robokudo.pipeline
 from robokudo.annotators.cluster_pose_bb import ClusterPoseBBAnnotator
 from robokudo.annotators.outlier_removal_objecthypothesis import OutlierRemovalOnObjectHypothesisAnnotator
-from robokudo_suturo.annotators.cutlery_handle_annotator import CutleryHandleAnnotator
-from robokudo_suturo.annotators.filter_object_by_semantic_annotation import FilterObjectBySemanticAnnotation
-from robokudo_suturo.annotators.type_mapping_annotator import TypeMappingAnnotator
-from robokudo_yolo.annotators.YoloAnnotator import YoloAnnotator
+from robokudo.annotators.gpsr.filter_object_by_semantic_annotation import FilterObjectBySemanticAnnotation
+from robokudo.annotators.gpsr.type_mapping_annotator import TypeMappingAnnotator
+from robokudo.annotators.yolo_annotator import YoloAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

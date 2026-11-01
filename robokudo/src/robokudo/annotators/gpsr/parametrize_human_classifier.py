@@ -1,7 +1,7 @@
 import os
 
 import py_trees
-import robokudo_faces
+import robokudo.annotators.gpsr.face_classification
 
 import robokudo.annotators.core
 import robokudo.utils.annotator_helper
@@ -12,7 +12,7 @@ import robokudo.annotators.core
 
 
 class ParametrizeHumanClassifyAnnotator(robokudo.annotators.core.BaseAnnotator):
-    def __init__(self,classify_annotator : robokudo_faces.annotators.face_classification.FaceClassification,
+    def __init__(self,classify_annotator : robokudo.annotators.gpsr.face_classification.FaceClassification,
                  name="ParametrizeHumanClassifyAnnotator", ros_pkg_path='robokudo_robocup_receptionist'):
 
         super().__init__(str(name))

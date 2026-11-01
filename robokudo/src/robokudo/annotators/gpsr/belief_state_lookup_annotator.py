@@ -5,7 +5,7 @@ from robokudo.annotators.core import BaseAnnotator
 from robokudo.cas import CASViews
 from robokudo.utils.query import QueryHandler
 from robokudo_msgs.action import Query
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 
 
 class BeliefStateLookupAnnotator(BaseAnnotator):

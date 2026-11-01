@@ -9,8 +9,8 @@ from robokudo.utils.query import QueryHandler
 from robokudo.utils.type_conversion import get_geometry_msgs_pose_stamped_from_position_annotation
 from robokudo_msgs.action import Query
 from robokudo_msgs.msg import ObjectDesignator
-from robokudo_human_activity.annotators.human_activity_annotator import HumanActivityAnnotator
-from robokudo_suturo.annotators.belief_state import BeliefEntry
+from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
+from robokudo.annotators.gpsr.belief_state import BeliefEntry
 
 
 class GenerateHumanPostureResults(BaseAnnotator):

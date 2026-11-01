@@ -2,10 +2,10 @@ import py_trees
 import robokudo.analysis_engine
 import robokudo.annotators.query
 from robokudo.annotators.cluster_position import ClusterPositionAnnotator
-from robokudo_robocup_gpsr.annotators.gpsr_results import GenerateObjectDetectionResult
-from robokudo_yolo.annotators.YoloAnnotator import YoloAnnotator
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
-from robokudo_suturo.descriptors.analysis_engines.subtree_object_detection import Subtree as ObjectDetectionSubtree
+from robokudo.annotators.gpsr.gpsr_results import GenerateObjectDetectionResult
+from robokudo.annotators.yolo_annotator import YoloAnnotator
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
+from robokudo.descriptors.analysis_engines.gpsr.subtree_object_detection import Subtree as ObjectDetectionSubtree
 from robokudo.annotators.query import GenerateQueryResult
 
 

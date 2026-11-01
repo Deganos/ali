@@ -1,6 +1,6 @@
 import py_trees
 import robokudo.analysis_engine
-from robokudo_suturo.annotators.belief_state_lookup_annotator import BeliefStateLookupAnnotator
+from robokudo.annotators.gpsr.belief_state_lookup_annotator import BeliefStateLookupAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

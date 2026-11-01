@@ -1,10 +1,10 @@
 import py_trees
 import robokudo.analysis_engine
 from robokudo.annotators.cluster_position import ClusterPositionAnnotator
-from robokudo_human_activity.annotators.waving import HumanWavingAnnotator
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
-from robokudo_robocup_gpsr.annotators.gpsr_results import GenerateWavingRaisingResult
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
+from robokudo.annotators.gpsr.waving import HumanWavingAnnotator
+from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.gpsr.gpsr_results import GenerateWavingRaisingResult
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):

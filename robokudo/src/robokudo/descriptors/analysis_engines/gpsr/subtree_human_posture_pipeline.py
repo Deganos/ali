@@ -2,10 +2,10 @@ import py_trees
 import robokudo.analysis_engine
 from robokudo.annotators.cluster_position import ClusterPositionAnnotator
 from robokudo.types.scene import ObjectHypothesis
-from robokudo_human_detection.annotators.human_and_pose import HumanAndPoseAnnotator
-from robokudo_robocup_gpsr.annotators.gpsr_results import GenerateHumanPostureResults
-from robokudo_suturo.annotators.belief_state import BeliefStateAnnotator
-from robokudo_zero_shot_classification.annotators.zero_shot_classification import ZeroShotClfAnnotator
+from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
+from robokudo.annotators.gpsr.gpsr_results import GenerateHumanPostureResults
+from robokudo.annotators.gpsr.belief_state import BeliefStateAnnotator
+from robokudo.annotators.clip_annotator import CLIPAnnotator
 
 
 class Subtree(robokudo.analysis_engine.SubtreeInterface):
@@ -17,7 +17,7 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         """
         Returns the list of annotators to be used in this subtree.
         """
-        zero_shot_descriptor = ZeroShotClfAnnotator.Descriptor()
+        zero_shot_descriptor = CLIPAnnotator.Descriptor()
         zero_shot_descriptor.parameters.analysis_scope = ObjectHypothesis
         zero_shot_descriptor.parameters.save_top_k = 1
         zero_shot_descriptor.parameters.classes = self.postures
@@ -25,7 +25,7 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         seq = py_trees.composites.Sequence("subtree_human_position_pipeline", memory=True)
         seq.add_children([
             HumanAndPoseAnnotator(),
-            ZeroShotClfAnnotator(descriptor=zero_shot_descriptor),
+            CLIPAnnotator(descriptor=zero_shot_descriptor),
             ClusterPositionAnnotator(),
             BeliefStateAnnotator(),
             GenerateHumanPostureResults(),

@@ -53,7 +53,7 @@ class FaceDetector(robokudo.annotators.core.ThreadedAnnotator):
             try:
                 resized_color = robokudo.utils.cv_helper.get_scaled_color_image_for_depth_image(self.get_cas(),
                                                                                                 self.color)
-                robokudo.utils.annotator_helper.scale_cam_intrinsics(self)
+                robokudo.utils.annotator_helper.scale_camera_intrinsics(self)
             except RuntimeError as e:
                 self.rk_logger.error(
                     "No color to depth ratio set by your camera driver! Can't scale image for Point Cloud creation.")

@@ -27,7 +27,7 @@ import robokudo.utils.transform
 from robokudo.annotators.core import BaseAnnotator
 
 from robokudo.types.annotation import PoseAnnotation, PositionAnnotation
-from robokudo.utils.annotator_helper import transform_pose_from_cam_to_world, transform_pose_from_world_to_cam
+from robokudo.utils.annotator_helper import transform_pose_from_camera_to_world, transform_pose_from_world_to_camera
 from robokudo.utils.math_helper import compute_direction_vector_angle
 from robokudo.utils.transform import get_rotation_matrix_from_q
 from robokudo.utils.module_loader import ModuleLoader
@@ -195,7 +195,7 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
                 else:
                     pose.rotation = structure[2]
 
-                transformed_pose = transform_pose_from_world_to_cam(self.get_cas(), pose)
+                transformed_pose = transform_pose_from_world_to_camera(self.get_cas(), pose)
 
                 new_structure_pose = (structure[0], (transformed_pose.translation[0], transformed_pose.translation[1], transformed_pose.translation[2]),
                                       (transformed_pose.rotation[0], transformed_pose.rotation[1], transformed_pose.rotation[2], transformed_pose.rotation[3]),
@@ -237,7 +237,7 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
             rotation_matrix = robokudo.utils.transform.get_rotation_matrix_from_direction_vector(pointing_direction)
             pose_elbow.rotation = list(robokudo.utils.transform.get_quaternion_from_rotation_matrix(rotation_matrix))
 
-            transform_elbow = transform_pose_from_cam_to_world(self.get_cas(), pose_elbow)
+            transform_elbow = transform_pose_from_camera_to_world(self.get_cas(), pose_elbow)
 
             pointed_at_objects = []
             object_hypotheses = []

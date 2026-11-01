@@ -8,29 +8,29 @@ from robokudo.pipeline import Pipeline
 from robokudo.tree_components.query_based_task_scheduler import QueryBasedScheduler
 from robokudo.utils.error_handling import catch_and_raise_to_blackboard
 from robokudo_robocup_gpsr.descriptors.analysis_engines.gsam_pipeline import GSamPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_waving_raising_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_waving_raising_pipeline import \
     Subtree as Subtree_WavingRaisingPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_human_posture_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_posture_pipeline import \
     Subtree as Subtree_HumanPosturePipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_object_detection_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_object_detection_pipeline import \
     Subtree as Subtree_ObjectDetectionPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_pointing_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_pointing_pipeline import \
     Subtree as Subtree_PointingPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_human_activity_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_activity_pipeline import \
     Subtree as Subtree_Human_Activity
 from robokudo_suturo.descriptors.analysis_engines.subtree_human_attribute_pipeline import \
     Subtree as Subtree_Human_Attribute
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_human_near_object import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_near_object import \
     Subtree as Subtree_HumanNearObjectPipeline, FURNITURE
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_human_in_room import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_human_in_room import \
     Subtree as Subtree_HumanInRoomPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_obj_in_room import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_obj_in_room import \
     Subtree as Subtree_ObjInRoomPipeline
-from robokudo_robocup_receptionist.annotators.subtree_faces import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_faces import \
     Subtree as Subtree_FacesPipeline
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_belief_lookup import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_belief_lookup import \
     Subtree as Subtree_BeliefLookup
-from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_door_pipeline import \
+from robokudo.descriptors.analysis_engines.gpsr.subtree_door_pipeline import \
     Subtree as Subtree_DoorPipeline
 from robokudo_robocup_gpsr.descriptors.analysis_engines.subtree_door_pipeline_gsam import \
     Subtree as Subtree_DoorGsamPipeline
