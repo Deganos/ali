@@ -13,6 +13,7 @@ Created at: 2026-04-14
 
 from timeit import default_timer
 
+import cv2
 import numpy as np
 import py_trees
 import torch
@@ -78,7 +79,8 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         """Extracts person crops from the color image.
         If upper_body_only=True, only the upper 60% used.
         """
-        img = Image.fromarray(self.get_cas().get(CASViews.COLOR_IMAGE))
+        # the CAS holds the color image in OpenCV's BGR order, CLIP expects RGB
+        img = Image.fromarray(cv2.cvtColor(self.get_cas().get(CASViews.COLOR_IMAGE), cv2.COLOR_BGR2RGB))
 
         #Image height is not required
         img_width, _ = img.size
