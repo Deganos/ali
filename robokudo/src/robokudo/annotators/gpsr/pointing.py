@@ -101,7 +101,6 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
 
         self.color = self.get_cas().get(robokudo.cas.CASViews.COLOR_IMAGE)
         cloud = self.get_cas().get(robokudo.cas.CASViews.CLOUD)
-        self.cam_info = self.get_cas().get(robokudo.cas.CASViews.CAM_INFO)
         all_vis_geometries = [cloud]
 
         human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
@@ -128,7 +127,7 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
             keypoint_annotations = robokudo.cas.CAS.filter_by_type(robokudo.types.human.KeypointAnnotation,
                                                                    human_hypothesis.annotations)
             keypoint_3d_annotations = [a for a in keypoint_annotations if
-                                       a.type == robokudo.types.human.KeypointAnnotation.KP_TYPE_3D]
+                                       a.kind == robokudo.types.human.KeypointKind.POINT_CLOUD]
             if len(keypoint_3d_annotations) != 1:
                 self.rk_logger.warning("Couldn't find 3D Keypoints in the CAS")
                 continue
@@ -136,11 +135,11 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
             keypoint_3d_annotation = keypoint_3d_annotations[0]
 
             # Calculate the centroid for each of the keypoints of interest
-            left_elbow_cloud, left_elbow_confidence = keypoint_3d_annotation.keypoints[7]
-            left_wrist_cloud, left_wrist_confidence = keypoint_3d_annotation.keypoints[9]
+            left_elbow_cloud = keypoint_3d_annotation.keypoints[7].points
+            left_wrist_cloud = keypoint_3d_annotation.keypoints[9].points
 
-            right_elbow_cloud, right_elbow_confidence = keypoint_3d_annotation.keypoints[8]
-            right_wrist_cloud, right_wrist_confidence = keypoint_3d_annotation.keypoints[10]
+            right_elbow_cloud = keypoint_3d_annotation.keypoints[8].points
+            right_wrist_cloud = keypoint_3d_annotation.keypoints[10].points
 
             if len(left_elbow_cloud.points) == 0 or len(left_wrist_cloud.points) == 0:
                 self.rk_logger.warning("One of the relevant left keypoint clouds was empty - Can't estimate pointing")
@@ -310,16 +309,16 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
     def torso_center(self, keypoint_3d_annotation):
         """Torso center from shoulders + hips. Falls back to shoulders only if hips unavailable."""
         try:
-            left_shoulderloud, _ = keypoint_3d_annotation.keypoints[5]
-            right_shoulderloud, _ = keypoint_3d_annotation.keypoints[6]
+            left_shoulderloud = keypoint_3d_annotation.keypoints[5].points
+            right_shoulderloud = keypoint_3d_annotation.keypoints[6].points
             if len(left_shoulderloud.points) == 0 or len(right_shoulderloud.points) == 0:
                 return None
             left_shoulder, _ = left_shoulderloud.compute_mean_and_covariance()
             right_shoulder, _ = right_shoulderloud.compute_mean_and_covariance()
             points = [left_shoulder, right_shoulder]
             try:
-                left_hiploud, _ = keypoint_3d_annotation.keypoints[11]
-                right_hiploud, _ = keypoint_3d_annotation.keypoints[12]
+                left_hiploud = keypoint_3d_annotation.keypoints[11].points
+                right_hiploud = keypoint_3d_annotation.keypoints[12].points
                 if len(left_hiploud.points) > 0 and len(right_hiploud.points) > 0:
                     left_hip, _ = left_hiploud.compute_mean_and_covariance()
                     right_hip, _ = right_hiploud.compute_mean_and_covariance()
@@ -333,8 +332,8 @@ class HumanPointingAnnotator(robokudo.annotators.core.BaseAnnotator):
     def shoulder_centroids(self, keypoint_3d_annotation):
         """Returns (left_shoulder, right_shoulder) centroids, or (None, None) if unavailable."""
         try:
-            left_shoulderloud, _ = keypoint_3d_annotation.keypoints[5]
-            right_shoulderloud, _ = keypoint_3d_annotation.keypoints[6]
+            left_shoulderloud = keypoint_3d_annotation.keypoints[5].points
+            right_shoulderloud = keypoint_3d_annotation.keypoints[6].points
             if len(left_shoulderloud.points) == 0 or len(right_shoulderloud.points) == 0:
                 return None, None
             left_shoulder, _ = left_shoulderloud.compute_mean_and_covariance()

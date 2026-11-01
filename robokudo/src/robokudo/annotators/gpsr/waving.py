@@ -21,16 +21,7 @@ import robokudo.utils.error_handling
 import robokudo.utils.math_helper
 import robokudo.utils.o3d_helper
 import robokudo.utils.transform
-from robokudo.annotators.human_and_pose import HumanAndPoseAnnotator
-
-
-# Structure to hold keypoint data and confidence to ease handling of multiple keypoints
-class KeypointData:
-    def __init__(self, data: list):
-        assert (len(data) == 3)
-        self.x = data[0]
-        self.y = data[1]
-        self.confidence = data[2]
+from robokudo.annotators.human_and_pose import PoseKeypoint
 
 
 class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
@@ -58,7 +49,6 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
 
         self.color = self.get_cas().get(robokudo.cas.CASViews.COLOR_IMAGE)
         self.cloud = self.get_cas().get(robokudo.cas.CASViews.CLOUD)
-        self.cam_info = self.get_cas().get(robokudo.cas.CASViews.CAM_INFO)
 
         human_hypotheses = self.get_cas().filter_annotations_by_type(robokudo.types.scene.HumanHypothesis)
 
@@ -83,7 +73,7 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
             keypoint_annotations = robokudo.cas.CAS.filter_by_type(robokudo.types.human.KeypointAnnotation,
                                                                    human_hypothesis.annotations)
             keypoint_2d_annotations = [a for a in keypoint_annotations if
-                                       a.type == robokudo.types.human.KeypointAnnotation.KP_TYPE_2D]
+                                       a.kind == robokudo.types.human.KeypointKind.IMAGE_POSITION]
 
             # Human detected, but no keypoint annotations. Can't estimate waving.
             if len(keypoint_2d_annotations) == 0:
@@ -117,18 +107,12 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         return py_trees.common.Status.SUCCESS
 
     def keypoints_suggest_arm_raising(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
-        left_wrist = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_WRIST])
-        right_wrist = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_WRIST])
-        left_shoulder = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_SHOULDER])
-        right_shoulder = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_SHOULDER])
-        left_eye = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_EYE])
-        right_eye = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_EYE])
+        left_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_WRIST]
+        right_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_WRIST]
+        left_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_SHOULDER]
+        right_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_SHOULDER]
+        left_eye = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_EYE]
+        right_eye = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_EYE]
 
         left_eye_shoulder_distance_pixel = left_shoulder.y - left_eye.y
         right_eye_shoulder_distance_pixel = right_shoulder.y - right_eye.y
@@ -155,18 +139,12 @@ class HumanWavingAnnotator(robokudo.annotators.core.BaseAnnotator):
         return None
 
     def keypoints_suggest_waving(self, keypoint_2d_annotation: robokudo.types.human.KeypointAnnotation):
-        left_wrist = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_WRIST])
-        right_wrist = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_WRIST])
-        left_shoulder = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_SHOULDER])
-        right_shoulder = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_SHOULDER])
-        left_eye = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.LEFT_EYE])
-        right_eye = KeypointData(
-            keypoint_2d_annotation.keypoints[HumanAndPoseAnnotator.GetKeypoint.RIGHT_EYE])
+        left_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_WRIST]
+        right_wrist = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_WRIST]
+        left_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_SHOULDER]
+        right_shoulder = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_SHOULDER]
+        left_eye = keypoint_2d_annotation.keypoints[PoseKeypoint.LEFT_EYE]
+        right_eye = keypoint_2d_annotation.keypoints[PoseKeypoint.RIGHT_EYE]
 
         # Because this approach is using 2d coordinates, we need some kind of size estimate
         # to define proper thresholds in the pixel-level

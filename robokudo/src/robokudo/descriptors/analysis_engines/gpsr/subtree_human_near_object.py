@@ -87,11 +87,15 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         if box_z is not None:
             filter_descriptor.parameters.box_z = box_z
 
+        # CRAM's HumanAndPoseAnnotator works without depth by default, the person's position needs it
+        human_descriptor = HumanAndPoseAnnotator.Descriptor()
+        human_descriptor.parameters.global_with_depth = True
+
         seq = py_trees.composites.Sequence("subtree_human_near_object", memory=True)
         seq.add_children([
             YoloFurnitureSetup(yolo_descriptor.parameters, filter_descriptor.parameters),
             YoloAnnotator(descriptor=yolo_descriptor),
-            HumanAndPoseAnnotator(),
+            HumanAndPoseAnnotator(descriptor=human_descriptor),
             ClusterPositionAnnotator(),
             FilterHumansByObjectAnnotator(descriptor=filter_descriptor),
             BeliefStateAnnotator(),

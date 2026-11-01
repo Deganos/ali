@@ -20,11 +20,15 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         zero_shot_descriptor = CLIPAnnotator.Descriptor()
         zero_shot_descriptor.parameters.analysis_scope = ObjectHypothesis
         zero_shot_descriptor.parameters.save_top_k = 1
-        zero_shot_descriptor.parameters.classes = self.postures
+        zero_shot_descriptor.parameters.vocabulary = self.postures
+
+        # CRAM's HumanAndPoseAnnotator works without depth by default, the person's position needs it
+        human_descriptor = HumanAndPoseAnnotator.Descriptor()
+        human_descriptor.parameters.global_with_depth = True
 
         seq = py_trees.composites.Sequence("subtree_human_position_pipeline", memory=True)
         seq.add_children([
-            HumanAndPoseAnnotator(),
+            HumanAndPoseAnnotator(descriptor=human_descriptor),
             CLIPAnnotator(descriptor=zero_shot_descriptor),
             ClusterPositionAnnotator(),
             BeliefStateAnnotator(),

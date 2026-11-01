@@ -13,9 +13,13 @@ class Subtree(robokudo.analysis_engine.SubtreeInterface):
         self.attribute = attribute
 
     def implementation(self, name=None, *args, **kwargs):
+        # CRAM's HumanAndPoseAnnotator works without depth by default, the person's position needs it
+        human_descriptor = HumanAndPoseAnnotator.Descriptor()
+        human_descriptor.parameters.global_with_depth = True
+
         seq = py_trees.composites.Sequence("subtree_waving_raising_pipeline", memory=True)
         seq.add_children([
-            HumanAndPoseAnnotator(),
+            HumanAndPoseAnnotator(descriptor=human_descriptor),
             ClusterPositionAnnotator(),
             HumanWavingAnnotator(),
             BeliefStateAnnotator(),

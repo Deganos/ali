@@ -1,4 +1,3 @@
-import copy
 import logging
 import queue
 
@@ -25,6 +24,7 @@ from robokudo_msgs.msg import ShapeSize
 from geometry_msgs.msg import Vector3
 from robokudo_msgs.action import Query
 from robokudo.annotators.gpsr.belief_state import BeliefEntry
+from robokudo.annotators.gpsr.gpsr_results import camera_header
 
 
 # class QueryAnnotator(robokudo.annotators.core.BaseAnnotator):
@@ -331,7 +331,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                     # TODO Rewrite with a generic conversion module for each of the types
 
                     if isinstance(oh_annotation, robokudo.types.annotation.Classification):
-                        if oh_annotation.source == 'ZeroShotClfAnnotator':
+                        if oh_annotation.source == 'CLIPAnnotator':
                             object_designator.attribute.append(oh_annotation.classname)
                         else:
                             object_designator.type = oh_annotation.classname
@@ -364,7 +364,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                         ps.pose.orientation.w = pose_map.rotation[3]
 
                         # We assume that the pose annotation is in CAMERA coordinates
-                        ps.header = copy.deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                        ps.header = camera_header(self.get_cas())
                         ps.header.frame_id = 'map'
                         object_designator.pose.append(ps)
 
@@ -397,7 +397,7 @@ class GenerateAllQueryResult(robokudo.annotators.core.BaseAnnotator):
                         ps.pose.orientation.w = pose_map.rotation[3]
 
                         # We assume that the pose annotation is in CAMERA coordinates
-                        ps.header = copy.deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                        ps.header = camera_header(self.get_cas())
                         ps.header.frame_id = 'map'
                         object_designator.pose.append(ps)
 
@@ -438,7 +438,7 @@ class GenerateCharacteristicResult(robokudo.annotators.core.BaseAnnotator):
                 if not isinstance(annotation, robokudo.types.annotation.Classification):
                     continue
 
-                if annotation.source == 'ZeroShotClfAnnotator':
+                if annotation.source == 'CLIPAnnotator':
                     object_designator.attribute.append(annotation.classname)
                 else:
                     object_designator.type = annotation.classname

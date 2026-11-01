@@ -10,6 +10,7 @@ import robokudo.types.annotation
 import robokudo.utils.error_handling
 import robokudo.utils.transform
 from robokudo.cas import CAS, CASViews
+from robokudo.io.camera_model_adapters import Open3DCameraModelAdapter
 from robokudo.types.scene import ObjectHypothesis
 
 DOOR_CLASSES = ('door', 'cabinet door', 'refrigerator door')
@@ -213,7 +214,7 @@ class DoorHandlePoseAnnotator(robokudo.annotators.core.BaseAnnotator):
         cas = self.get_cas()
         color = cas.get_copy(CASViews.COLOR_IMAGE)
         depth = cas.get(CASViews.DEPTH_IMAGE)
-        intrinsics = cas.get(CASViews.CAM_INTRINSIC)
+        intrinsics = Open3DCameraModelAdapter.to_intrinsic(cas.require_camera_observation().effective_camera_model)
 
         self.depth = np.asarray(depth, dtype=np.float32) * self.descriptor.parameters.depth_scale
         k = intrinsics.intrinsic_matrix

@@ -1,7 +1,8 @@
-from copy import deepcopy
+from builtin_interfaces.msg import Time
 from py_trees.common import Status
+from std_msgs.msg import Header
 from robokudo.annotators.core import BaseAnnotator
-from robokudo.cas import CASViews
+from robokudo.cas import CAS, CASViews
 from robokudo.types.annotation import Classification, LocationAnnotation, PositionAnnotation
 from robokudo.types.human import ActivityAnnotation
 from robokudo.types.scene import HumanHypothesis, ObjectHypothesis
@@ -11,6 +12,20 @@ from robokudo_msgs.action import Query
 from robokudo_msgs.msg import ObjectDesignator
 from robokudo.annotators.gpsr.human_activity_annotator import HumanActivityAnnotator
 from robokudo.annotators.gpsr.belief_state import BeliefEntry
+
+
+def camera_header(cas: CAS) -> Header:
+    """
+    The header of the current camera image: its acquisition time and the frame of the camera.
+    """
+    observation = cas.require_camera_observation()
+    return Header(
+        frame_id=str(observation.camera.root.name),
+        stamp=Time(
+            sec=observation.timestamp_nanoseconds // 1_000_000_000,
+            nanosec=observation.timestamp_nanoseconds % 1_000_000_000,
+        ),
+    )
 
 
 class GenerateHumanPostureResults(BaseAnnotator):
@@ -36,7 +51,7 @@ class GenerateHumanPostureResults(BaseAnnotator):
             positions = self.get_cas().filter_by_type(PositionAnnotation, hypothesis.annotations)
 
             for classification in classifications:
-                if classification.source == "ZeroShotClfAnnotator":
+                if classification.source == "CLIPAnnotator":
                     if classification.classname == query.obj.attribute[0]:
                         object_designator.attribute.append(classification.classname)
 
@@ -45,7 +60,7 @@ class GenerateHumanPostureResults(BaseAnnotator):
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
-                    header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                    header = camera_header(self.get_cas())
                     pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
@@ -87,7 +102,7 @@ class GenerateObjectDetectionResult(BaseAnnotator):
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
-                    header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                    header = camera_header(self.get_cas())
                     pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
@@ -133,7 +148,7 @@ class GenerateWavingRaisingResult(BaseAnnotator):
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
-                    header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                    header = camera_header(self.get_cas())
                     pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
@@ -178,7 +193,7 @@ class GeneratePointingResult(BaseAnnotator):
                     if belief_ids:
                         object_designator.uid = str(belief_ids[0].id)
                     for position in positions:
-                        header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                        header = camera_header(self.get_cas())
                         pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                         object_designator.pose.append(pose_stamped)
                         object_designator.pose_source.append(position.source)
@@ -246,7 +261,7 @@ class GenerateHumanActivityResult(BaseAnnotator):
                 if belief_ids:
                     object_designator.uid = str(belief_ids[0].id)
                 for position in positions:
-                    header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                    header = camera_header(self.get_cas())
                     pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                     object_designator.pose.append(pose_stamped)
                     object_designator.pose_source.append(position.source)
@@ -363,7 +378,7 @@ class GenerateGSamResult(BaseAnnotator):
 
                                 positions = self.get_cas().filter_by_type(PositionAnnotation, human_hypothesis.annotations)
                                 for position in positions:
-                                    header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                                    header = camera_header(self.get_cas())
                                     pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                                     object_designator.pose.append(pose_stamped)
                                     object_designator.pose_source.append(position.source)
@@ -387,7 +402,7 @@ class GenerateGSamResult(BaseAnnotator):
 
                     positions = self.get_cas().filter_by_type(PositionAnnotation, object_hypothesis.annotations)
                     for position in positions:
-                        header = deepcopy(self.get_cas().get(CASViews.CAM_INFO).header)
+                        header = camera_header(self.get_cas())
                         pose_stamped = get_geometry_msgs_pose_stamped_from_position_annotation(position, header)
                         object_designator.pose.append(pose_stamped)
                         object_designator.pose_source.append(position.source)

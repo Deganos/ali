@@ -132,7 +132,7 @@ class HumanActivityAnnotator(robokudo.annotators.core.ThreadedAnnotator):
         with torch.no_grad():
             probs_posture  = self.model(**inputs_posture).logits_per_image.softmax(dim=1).detach().numpy()
             probs_gesture  = self.model(**inputs_gesture).logits_per_image.softmax(dim=1).detach().numpy()
-            raw_feats      = self.model.get_image_features(pixel_values=inputs_posture["pixel_values"])
+            raw_feats      = self.model.get_image_features(pixel_values=inputs_posture["pixel_values"]).pooler_output
             image_features = (raw_feats / raw_feats.norm(dim=-1, keepdim=True)).detach().cpu().numpy()
 
         for hh, posture_dist, gesture_dist, img_feat in zip(
