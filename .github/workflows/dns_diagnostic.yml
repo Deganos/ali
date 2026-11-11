@@ -1,6 +1,7 @@
 name: DNS diagnostic PR 77
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [codex-dns-diagnostic-77]
