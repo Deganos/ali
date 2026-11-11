@@ -1,0 +1,38 @@
+name: DNS diagnostic PR 77
+
+on:
+  push:
+    branches: [codex-dns-diagnostic-77]
+
+permissions:
+  contents: read
+
+jobs:
+  host:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check runner DNS
+        run: bash scripts/diagnose_runner_dns.sh
+
+  container:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-26.04]
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ghcr.io/suturo/cognitive_robot_abstract_machine:jazzy
+      options: --volume /:/host
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check DNS before disk cleanup
+        run: bash scripts/diagnose_runner_dns.sh
+      - name: Free disk space
+        run: bash scripts/free_runner_disk.sh
+      - name: Check DNS after disk cleanup
+        run: bash scripts/diagnose_runner_dns.sh
